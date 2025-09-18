@@ -26,3 +26,9 @@ class ChatResponse(BaseModel):
     session_id: str
     message_id: str
     timestamp: str
+
+
+ChatMessage.model_rebuild()
+ChatSession.model_rebuild()
+ChatRequest.model_rebuild()
+ChatResponse.model_rebuild()

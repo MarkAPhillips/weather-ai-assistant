@@ -15,20 +15,22 @@ load_dotenv()
 # Initialize session manager
 session_manager = SessionManager()
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan manager."""
     # Startup
     print("Starting Weather AI Assistant...")
-    
+
     # Start background cleanup task
     cleanup_task = asyncio.create_task(periodic_cleanup())
-    
+
     yield
-    
+
     # Shutdown
     cleanup_task.cancel()
     print("Shutting down Weather AI Assistant...")
+
 
 async def periodic_cleanup():
     """Periodically clean up expired sessions."""
@@ -71,7 +73,7 @@ async def send_chat_message(request: ChatRequest):
                 raise HTTPException(status_code=404, detail="Session not found")
         else:
             session = session_manager.create_session()
-        
+
         # Add user message to session
         user_message = session_manager.add_message(
             session.session_id, "user", request.message
@@ -116,6 +118,7 @@ async def list_sessions():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @app.get("/api/chat/sessions/{session_id}")
 async def get_session(session_id: str):
     """Get a specific chat session."""
@@ -128,6 +131,7 @@ async def get_session(session_id: str):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.delete("/api/chat/sessions/{session_id}")
 async def delete_session(session_id: str):

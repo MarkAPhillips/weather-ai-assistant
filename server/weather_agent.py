@@ -83,7 +83,7 @@ class WeatherService:
     def get_forecast_data(self, city: str, days: int = 5) -> Dict[str, Any]:
         """Get weather forecast data."""
         cache_key = f"{city}_forecast_{days}"
-        
+
         # Check cache first
         if self._is_cache_valid(cache_key):
             logger.info(f"Using cached forecast data for {city}")
