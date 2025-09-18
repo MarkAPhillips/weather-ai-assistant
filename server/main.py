@@ -78,36 +78,36 @@ async def send_chat_message(request: ChatRequest):
         user_message = session_manager.add_message(
             session.session_id, "user", request.message
         )
-        
+
         if not user_message:
             raise HTTPException(status_code=500, detail="Failed to add message")
-        
-        
+
         # Get conversation history
         conversation_history = session_manager.get_conversation_history(session.session_id)
-        
+
         # Get AI response with context
         ai_response = weather_agent.get_weather_advice(
             query=request.message,
             conversation_history=conversation_history
         )
-        
+
         # Add AI response to session
         ai_message = session_manager.add_message(
             session.session_id, "assistant", ai_response
         )
-        
+
         return ChatResponse(
             response=ai_response,
             session_id=session.session_id,
             message_id=ai_message.message_id,
             timestamp=ai_message.timestamp
         )
-        
+
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.get("/api/chat/sessions")
 async def list_sessions():
@@ -146,6 +146,7 @@ async def delete_session(session_id: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @app.post("/api/chat/sessions")
 async def create_session(request: Optional[ChatRequest] = None):
     """Create a new chat session."""
@@ -154,6 +155,7 @@ async def create_session(request: Optional[ChatRequest] = None):
         return session
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.get("/api/chat/stats")
 async def get_chat_stats():
@@ -164,6 +166,7 @@ async def get_chat_stats():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @app.post("/api/chat/cleanup")
 async def cleanup_expired_sessions():
     """Clean up expired sessions."""
@@ -172,6 +175,7 @@ async def cleanup_expired_sessions():
         return {"message": f"Cleaned up {cleaned_count} expired sessions"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.get("/api/health")
 async def health_check():

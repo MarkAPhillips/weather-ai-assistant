@@ -9,3 +9,5 @@ langgraph
 python-dotenv
 pydantic
 gunicorn
+pytest
+httpx
