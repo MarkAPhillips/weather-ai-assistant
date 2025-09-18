@@ -1,16 +1,16 @@
-name: Backend CI/CD
+name: API CI/CD build and deploy
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main]
     paths:
       - 'server/**'
-      - '.github/workflows/backend.yml'
+      - '.github/workflows/api-build-and-deploy.yml'
   pull_request:
     branches: [ main ]
     paths:
       - 'server/**'
-      - '.github/workflows/backend.yml'
+      - '.github/workflows/api-build-and-deploy.yml'
 
 jobs:
   test:

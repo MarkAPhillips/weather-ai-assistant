@@ -1,16 +1,16 @@
-name: Frontend CI/CD
+name: UI CI/CD build and deploy
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main ]
     paths:
       - 'client/**'
-      - '.github/workflows/frontend.yml'
+      - '.github/workflows/ui-build-and-deploy.yml'
   pull_request:
     branches: [ main ]
     paths:
       - 'client/**'
-      - '.github/workflows/frontend.yml'
+      - '.github/workflows/ui-build-and-deploy.yml'
 
 jobs:
   test:
