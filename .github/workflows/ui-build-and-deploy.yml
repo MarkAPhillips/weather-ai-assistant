@@ -48,7 +48,7 @@ jobs:
         npm run build --configuration=production
         
     - name: Upload build artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: frontend-build
         path: client/dist/client/browser/
@@ -81,6 +81,7 @@ jobs:
         npm run build --configuration=production
         
     - name: Deploy to Render
+      id: deploy
       uses: johnbeynon/render-deploy-action@v0.0.8
       with:
         service-id: ${{ secrets.RENDER_UI_SERVICE_ID }}
