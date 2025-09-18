@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from typing import Optional
 import os
 import asyncio
-from datetime import datetime
+from datetime import datetime, timezone
 from contextlib import asynccontextmanager
 from weather_agent import WeatherAgent
 from session_manager import SessionManager
@@ -197,7 +197,7 @@ async def health_check():
         return {
             "status": overall_status,
             "service": "weather-ai",
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "components": {
                 "weather_agent": agent_status,
                 "environment": env_status
@@ -208,7 +208,7 @@ async def health_check():
             "status": "unhealthy",
             "service": "weather-ai",
             "error": str(e),
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
 
 if __name__ == "__main__":

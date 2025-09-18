@@ -1,5 +1,5 @@
 from typing import Dict, List, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import uuid
 from models import ChatSession, ChatMessage
 
@@ -14,7 +14,7 @@ class SessionManager:
     def create_session(self) -> ChatSession:
         """Create a new chat session."""
         session_id = str(uuid.uuid4())
-        now = datetime.now().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
 
         session = ChatSession(
             session_id=session_id,
@@ -43,12 +43,12 @@ class SessionManager:
         message = ChatMessage(
             role=role,
             content=content,
-            timestamp=datetime.now().isoformat(),
+            timestamp=datetime.now(timezone.utc).isoformat(),
             message_id=message_id
         )
 
         session.messages.append(message)
-        session.last_activity = datetime.now().isoformat()
+        session.last_activity = datetime.now(timezone.utc).isoformat()
 
         return message
 
@@ -94,7 +94,7 @@ class SessionManager:
     def _is_session_valid(self, session: ChatSession) -> bool:
         """Check if a session is still valid (not expired)."""
         last_activity = datetime.fromisoformat(session.last_activity)
-        return datetime.now() - last_activity < self.session_timeout
+        return datetime.now(timezone.utc) - last_activity < self.session_timeout
 
     def get_session_stats(self) -> Dict[str, int]:
         """Get session statistics."""

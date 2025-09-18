@@ -1,6 +1,6 @@
 import requests
 from typing import Dict, Any, List
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langgraph.prebuilt import create_react_agent
@@ -26,7 +26,7 @@ class WeatherService:
             return False
 
         cache_time = self.cache[city]["timestamp"]
-        return (datetime.now() - cache_time).seconds < self.cache_duration
+        return (datetime.now(timezone.utc) - cache_time).seconds < self.cache_duration
 
     def get_weather_data(self, city: str) -> Dict[str, Any]:
         """Get weather data with caching and error handling."""
@@ -56,13 +56,13 @@ class WeatherService:
                 "wind_direction": data["wind"].get("deg", 0),
                 "condition": data["weather"][0]["description"],
                 "condition_id": data["weather"][0]["id"],
-                "timestamp": datetime.now(),
+                "timestamp": datetime.now(timezone.utc),
             }
 
             # Cache the result
             self.cache[city] = {
                 "data": weather_info,
-                "timestamp": datetime.now()
+                "timestamp": datetime.now(timezone.utc)
             }
 
             logger.info(f"Successfully fetched weather data for {city}")
@@ -128,7 +128,7 @@ class WeatherService:
             # Cache the result
             self.cache[cache_key] = {
                 "data": forecast_info,
-                "timestamp": datetime.now()
+                "timestamp": datetime.now(timezone.utc)
             }
             
             logger.info(f"Successfully fetched forecast data for {city}")
@@ -206,7 +206,7 @@ class WeatherService:
             # Cache the result
             self.cache[cache_key] = {
                 "data": extended_forecast,
-                "timestamp": datetime.now()
+                "timestamp": datetime.now(timezone.utc)
             }
             
             logger.info(f"Successfully fetched extended forecast data for {city}")

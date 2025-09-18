@@ -57,8 +57,12 @@ export class ChatComponent implements OnInit, AfterViewChecked {
     this.weatherService.getChatSessions().subscribe({
       next: (data) => {
         this.sessions = data.sessions;
+        this.error = ''; // Clear any previous errors
       },
-      error: (err) => console.error('Failed to load sessions:', err)
+      error: (err) => {
+        console.error('Failed to load sessions:', err);
+        this.error = 'Failed to load sessions: ' + err.message;
+      }
     });
   }
 
