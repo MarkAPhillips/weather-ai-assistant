@@ -1,0 +1,171 @@
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4">
+  <div class="max-w-4xl mx-auto">
+    <!-- Header -->
+    <div class="text-center mb-8">
+      <h1 class="text-4xl font-bold text-gray-800 mb-2">
+        🌤️ Weather AI Assistant
+      </h1>
+      <p class="text-gray-600">
+        Get intelligent weather advice powered by AI
+      </p>
+    </div>
+
+    <!-- Location Section -->
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+      <h3 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+        📍 Your Location
+      </h3>
+      
+      <div *ngIf="userLocation; else noLocation" class="space-y-4">
+        <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-green-800 font-medium">
+                ✅ Location detected: {{userLocation.latitude | number:'1.4-4'}}, {{userLocation.longitude | number:'1.4-4'}}
+              </p>
+              <p class="text-green-600 text-sm mt-1">
+                Weather advice will be personalized for your location
+              </p>
+            </div>
+            <button 
+              (click)="getCurrentLocation()" 
+              class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2"
+            >
+              <span>🔄</span>
+              <span>Refresh</span>
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <ng-template #noLocation>
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <p class="text-blue-800 mb-3">
+            Allow location access for personalised weather advice
+          </p>
+          <button 
+            (click)="getCurrentLocation()" 
+            [disabled]="loading"
+            class="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-6 py-3 rounded-lg transition-colors duration-200 flex items-center space-x-2"
+          >
+            <span>📍</span>
+            <span>{{loading ? 'Getting location...' : 'Use My Location'}}</span>
+          </button>
+        </div>
+      </ng-template>
+      
+      <div *ngIf="locationPermission === 'denied'" class="mt-4 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+        <p class="text-yellow-800 flex items-center">
+          <span class="mr-2">⚠️</span>
+          Location access denied. You can still enter a city manually.
+        </p>
+      </div>
+    </div>
+
+    <!-- Query Form -->
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+      <form (ngSubmit)="onSubmit()" class="space-y-6">
+        <div>
+          <label for="city" class="block text-sm font-medium text-gray-700 mb-2">
+            City (optional)
+          </label>
+          <input
+            type="text"
+            id="city"
+            [(ngModel)]="city"
+            name="city"
+            placeholder="{{userLocation ? 'Leave empty to use your current location' : 'e.g., London, Tokyo, New York'}}"
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+          />
+        </div>
+        
+        <div>
+          <label for="query" class="block text-sm font-medium text-gray-700 mb-2">
+            Your Question
+          </label>
+          <textarea
+            id="query"
+            [(ngModel)]="query"
+            name="query"
+            placeholder="e.g., What's the weather like? Is it safe to drive? Should I go hiking?"
+            rows="3"
+            required
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 resize-none"
+          ></textarea>
+        </div>
+        
+        <button 
+          type="submit" 
+          [disabled]="loading || !query.trim()"
+          class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:from-gray-400 disabled:to-gray-500 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 flex items-center justify-center space-x-2"
+        >
+          <span *ngIf="loading" class="animate-spin">⏳</span>
+          <span *ngIf="!loading">🤖</span>
+          <span>{{loading ? 'Getting advice...' : 'Get Weather Advice'}}</span>
+        </button>
+      </form>
+    </div>
+
+    <!-- Error Display -->
+    <div *ngIf="error" class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+      <div class="flex items-center">
+        <span class="text-red-500 mr-2">❌</span>
+        <div>
+          <p class="text-red-800 font-medium">Error:</p>
+          <p class="text-red-700">{{error}}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Response Display -->
+    <div *ngIf="response" class="bg-white rounded-xl shadow-lg p-6 mb-6">
+      <h3 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+        🤖 AI Weather Assistant Response
+      </h3>
+      <div class="bg-gray-50 rounded-lg p-4">
+        <div class="prose prose-sm max-w-none">
+          <p *ngFor="let line of response.split('\n')" class="text-gray-700 leading-relaxed mb-2">
+            {{line}}
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Examples -->
+    <div class="bg-white rounded-xl shadow-lg p-6">
+      <h3 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+        💡 Example Questions
+      </h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="space-y-2">
+          <div class="bg-blue-50 rounded-lg p-3">
+            <p class="text-blue-800 font-medium">Location-based:</p>
+            <p class="text-blue-700 text-sm">"What's the weather like?"</p>
+          </div>
+          <div class="bg-blue-50 rounded-lg p-3">
+            <p class="text-blue-800 font-medium">Safety:</p>
+            <p class="text-blue-700 text-sm">"Is it safe to drive today?"</p>
+          </div>
+          <div class="bg-blue-50 rounded-lg p-3">
+            <p class="text-blue-800 font-medium">Activities:</p>
+            <p class="text-blue-700 text-sm">"Should I go hiking?"</p>
+          </div>
+        </div>
+        <div class="space-y-2">
+          <div class="bg-green-50 rounded-lg p-3">
+            <p class="text-green-800 font-medium">Clothing:</p>
+            <p class="text-green-700 text-sm">"What should I wear today?"</p>
+          </div>
+          <div class="bg-green-50 rounded-lg p-3">
+            <p class="text-green-800 font-medium">Specific City:</p>
+            <p class="text-green-700 text-sm">"What's the weather like in Tokyo?"</p>
+          </div>
+          <div class="bg-green-50 rounded-lg p-3">
+            <p class="text-green-800 font-medium">Planning:</p>
+            <p class="text-green-700 text-sm">"Will it rain this weekend?"</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

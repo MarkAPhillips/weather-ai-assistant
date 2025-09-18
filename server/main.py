@@ -1,16 +1,49 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
 from typing import Optional
 import os
-import requests
+import asyncio
 from datetime import datetime
+from contextlib import asynccontextmanager
 from weather_agent import WeatherAgent
+from session_manager import SessionManager
+from models import ChatRequest, ChatResponse
 from dotenv import load_dotenv
 
 load_dotenv()
 
-app = FastAPI()
+# Initialize session manager
+session_manager = SessionManager()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application lifespan manager."""
+    # Startup
+    print("Starting Weather AI Assistant...")
+    
+    # Start background cleanup task
+    cleanup_task = asyncio.create_task(periodic_cleanup())
+    
+    yield
+    
+    # Shutdown
+    cleanup_task.cancel()
+    print("Shutting down Weather AI Assistant...")
+
+async def periodic_cleanup():
+    """Periodically clean up expired sessions."""
+    while True:
+        try:
+            await asyncio.sleep(3600)  # Run every hour
+            cleaned_count = session_manager.cleanup_expired_sessions()
+            if cleaned_count > 0:
+                print(f"Cleaned up {cleaned_count} expired sessions")
+        except asyncio.CancelledError:
+            break
+        except Exception as e:
+            print(f"Cleanup error: {e}")
+
+app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -26,82 +59,115 @@ weather_agent = WeatherAgent(
 )
 
 
-class Location(BaseModel):
-    latitude: float
-    longitude: float
-
-
-class WeatherQuery(BaseModel):
-    query: str
-    city: Optional[str] = None
-    userLocation: Optional[Location] = None
-
-
-class WeatherResponse(BaseModel):
-    response: str
-    city: Optional[str] = None
-    usedLocation: bool = False
-    timestamp: str
-
-
-def get_city_from_coordinates(lat: float, lon: float) -> str:
-    """Get city name from coordinates using OpenWeatherMap Geocoding API."""
+# Chat endpoints
+@app.post("/api/chat/send", response_model=ChatResponse)
+async def send_chat_message(request: ChatRequest):
+    """Send a message and get AI response."""
     try:
-        response = requests.get(
-            "http://api.openweathermap.org/geo/1.0/reverse",
-            params={
-                'lat': lat,
-                'lon': lon,
-                'limit': 1,
-                'appid': os.getenv("OPENWEATHER_API_KEY")
-            },
-            timeout=10
-        )
-        response.raise_for_status()
-        data = response.json()
-
-        if data and len(data) > 0:
-            return data[0]['name']
-        return "Unknown Location"
-
-    except Exception as e:
-        print(f"Error getting city from coordinates: {e}")
-        return "Unknown Location"
-
-
-@app.post("/api/weather", response_model=WeatherResponse)
-async def get_weather_advice(request: WeatherQuery):
-    """Get weather advice from AI agent with optional geolocation."""
-    try:
-        used_location = False
-        target_city = request.city
-
-        # Use geolocation if provided and no specific city requested
-        if request.userLocation and not request.city:
-            target_city = get_city_from_coordinates(
-                request.userLocation.latitude,
-                request.userLocation.longitude
-            )
-            used_location = True
-
-        # Add city context to query
-        if target_city:
-            full_query = f"{request.query} (Location: {target_city})"
+        # Get or create session
+        if request.session_id:
+            session = session_manager.get_session(request.session_id)
+            if not session:
+                raise HTTPException(status_code=404, detail="Session not found")
         else:
-            full_query = request.query
-
-        response = weather_agent.get_weather_advice(full_query)
-
-        return WeatherResponse(
-            response=response,
-            city=target_city,
-            usedLocation=used_location,
-            timestamp=datetime.now().isoformat()
+            session = session_manager.create_session()
+        
+        # Add user message to session
+        user_message = session_manager.add_message(
+            session.session_id, "user", request.message
         )
-
+        
+        if not user_message:
+            raise HTTPException(status_code=500, detail="Failed to add message")
+        
+        
+        # Get conversation history
+        conversation_history = session_manager.get_conversation_history(session.session_id)
+        
+        # Get AI response with context
+        ai_response = weather_agent.get_weather_advice(
+            query=request.message,
+            conversation_history=conversation_history
+        )
+        
+        # Add AI response to session
+        ai_message = session_manager.add_message(
+            session.session_id, "assistant", ai_response
+        )
+        
+        return ChatResponse(
+            response=ai_response,
+            session_id=session.session_id,
+            message_id=ai_message.message_id,
+            timestamp=ai_message.timestamp
+        )
+        
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/api/chat/sessions")
+async def list_sessions():
+    """List all active chat sessions."""
+    try:
+        sessions = session_manager.list_sessions()
+        return {"sessions": sessions}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/chat/sessions/{session_id}")
+async def get_session(session_id: str):
+    """Get a specific chat session."""
+    try:
+        session = session_manager.get_session(session_id)
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+        return session
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/api/chat/sessions/{session_id}")
+async def delete_session(session_id: str):
+    """Delete a chat session."""
+    try:
+        success = session_manager.delete_session(session_id)
+        if not success:
+            raise HTTPException(status_code=404, detail="Session not found")
+        return {"message": "Session deleted successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/chat/sessions")
+async def create_session(request: Optional[ChatRequest] = None):
+    """Create a new chat session."""
+    try:
+        session = session_manager.create_session()
+        return session
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/chat/stats")
+async def get_chat_stats():
+    """Get chat session statistics."""
+    try:
+        stats = session_manager.get_session_stats()
+        return stats
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/chat/cleanup")
+async def cleanup_expired_sessions():
+    """Clean up expired sessions."""
+    try:
+        cleaned_count = session_manager.cleanup_expired_sessions()
+        return {"message": f"Cleaned up {cleaned_count} expired sessions"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/health")
 async def health_check():
@@ -139,4 +205,5 @@ async def health_check():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    port = int(os.getenv("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)

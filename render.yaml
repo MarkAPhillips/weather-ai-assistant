@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: weather-ai-assistant
+    env: python
+    buildCommand: pip install -r server/requirements.txt
+    startCommand: uvicorn server.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    envVars:
+      - key: GOOGLE_API_KEY
+        sync: false
+      - key: OPENWEATHER_API_KEY
+        sync: false
