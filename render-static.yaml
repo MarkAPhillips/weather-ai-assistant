@@ -2,7 +2,7 @@ services:
   - type: static
     name: weather-ai-frontend
     buildCommand: cd client && npm install && npm run build --configuration=production
-    staticPublishPath: client/dist/client
+    staticPublishPath: client/dist/client/browser
     pullRequestPreviewsEnabled: true
     headers:
       - path: /*
