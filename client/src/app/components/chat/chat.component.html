@@ -61,11 +61,22 @@
             </div>
 
             <!-- Messages -->
-            <div *ngFor="let message of displayedMessages" class="flex" [class.justify-end]="message.role === 'user'">
+            <div *ngFor="let message of displayedMessages" class="flex items-start space-x-2" [class.flex-row-reverse]="message.role === 'user'" [class.space-x-reverse]="message.role === 'user'">
+              <!-- Avatar -->
+              <div class="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-lg font-semibold"
+                   [class.bg-blue-300]="message.role === 'user'"
+                   [class.text-white]="message.role === 'user'"
+                   [class.bg-gray-200]="message.role === 'assistant'"
+                   [class.text-gray-600]="message.role === 'assistant'">
+                <span *ngIf="message.role === 'user'">👤</span>
+                <span *ngIf="message.role === 'assistant'">🤖</span>
+              </div>
+              
+              <!-- Message Content -->
               <div 
                 class="max-w-[80%] p-3 rounded-lg"
-                [class.bg-blue-600]="message.role === 'user'"
-                [class.text-white]="message.role === 'user'"
+                [class.bg-blue-200]="message.role === 'user'"
+                [class.text-black]="message.role === 'user'"
                 [class.bg-gray-100]="message.role === 'assistant'"
                 [class.text-gray-800]="message.role === 'assistant'"
               >
@@ -79,7 +90,7 @@
                 </div>
                 <div 
                   class="text-xs mt-1"
-                  [class.text-blue-100]="message.role === 'user'"
+                  [class.text-gray-600]="message.role === 'user'"
                   [class.text-gray-500]="message.role === 'assistant'"
                 >
                   {{formatTimestamp(message.timestamp)}}
@@ -88,7 +99,13 @@
             </div>
 
             <!-- Loading Indicator -->
-            <div *ngIf="loading" class="flex justify-start">
+            <div *ngIf="loading" class="flex items-start space-x-2">
+              <!-- Avatar -->
+              <div class="flex-shrink-0 w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-lg font-semibold text-gray-600">
+                🤖
+              </div>
+              
+              <!-- Loading Content -->
               <div class="bg-gray-100 p-3 rounded-lg">
                 <div class="flex items-center space-x-2">
                   <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>

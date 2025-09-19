@@ -61,8 +61,8 @@ export class WeatherService {
     return this.http.delete<{message: string}>(`${this.apiUrl}/chat/sessions/${sessionId}`);
   }
 
-  createChatSession(request?: Partial<ChatRequest>): Observable<ChatSession> {
-    return this.http.post<ChatSession>(`${this.apiUrl}/chat/sessions`, request || {});
+  createChatSession(): Observable<ChatSession> {
+    return this.http.post<ChatSession>(`${this.apiUrl}/chat/sessions`, null);
   }
 
   getChatStats(): Observable<SessionStats> {
