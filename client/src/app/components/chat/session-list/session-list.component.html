@@ -1,0 +1,77 @@
+<div class="h-full flex flex-col bg-transparent">
+  <!-- Header -->
+  <div class="p-4 pb-2 min-h-20 border-b border-white/10">
+    <div class="flex items-center justify-between w-full">
+      <div class="flex items-center gap-2">
+        <mat-icon class="text-lg text-white">chat</mat-icon>
+        <span class="text-lg font-medium text-white">Sessions</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <button 
+          *ngIf="hasOldSessions()"
+          mat-icon-button 
+          (click)="onCleanupRequested()" 
+          matTooltip="Remove old sessions (older than 24 hours)"
+          class="action-icon text-white/70 w-10 h-10"
+        >
+          <mat-icon class="text-xl text-white">clear_all</mat-icon>
+        </button>
+        <button 
+          mat-icon-button 
+          (click)="onClearAllRequested()" 
+          matTooltip="Delete all sessions"
+          class="action-icon text-white w-10 h-10"
+        >
+          <mat-icon class="text-xl text-white">delete_forever</mat-icon>
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Sessions list -->
+  <div class="flex-1 overflow-hidden">
+    <div class="max-h-96 overflow-y-auto py-2 px-4">
+      <div *ngFor="let session of getSessionsWithMessages()" class="mb-2">
+        <div 
+          class="cursor-pointer border rounded-lg p-3 bg-white/5"
+          (click)="onSessionSelected(session)"
+        >
+          <div class="flex justify-between items-start">
+            <div class="flex-1">
+              <div class="font-medium text-sm text-white">
+                {{ getFirstUserMessage(session) }}
+              </div>
+              <div class="text-xs text-slate-300 my-1">
+                {{ formatDate(session.created_at) }}
+              </div>
+              <div class="text-xs text-slate-400">
+                {{ session.messages.length }} messages
+              </div>
+            </div>
+            <button 
+              mat-icon-button 
+              (click)="onSessionDeleted(session.session_id); $event.stopPropagation()"
+              matTooltip="Delete session"
+              class="action-icon text-white"
+            >
+              <mat-icon class="text-white">delete</mat-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Empty state -->
+      <div *ngIf="getSessionsWithMessages().length === 0" class="text-center py-8 px-4 text-slate-400">
+        <mat-icon class="text-5xl w-12 h-12 mb-4 opacity-50 text-white">inbox</mat-icon>
+        <p>No sessions yet</p>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Footer -->
+  <div *ngIf="getSessionsWithMessages().length > 0" class="border-t border-white/10 py-2 px-4">
+    <div class="text-xs text-slate-400 text-center">
+      Total: {{ getSessionsWithMessages().length }} sessions
+    </div>
+  </div>
+</div>

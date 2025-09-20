@@ -1,0 +1,42 @@
+<div class="flex items-start mb-4 gap-4" 
+     [class.flex-row-reverse]="message.role === 'user'">
+  
+  <!-- Avatar -->
+  <div class="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/20"
+       [ngClass]="{
+         'bg-blue-500/30 text-white': message.role === 'user',
+         'bg-purple-500/30 text-white': message.role === 'assistant'
+       }">
+    <mat-icon *ngIf="message.role === 'user'" class="text-lg">person</mat-icon>
+    <mat-icon *ngIf="message.role === 'assistant'" class="text-lg">smart_toy</mat-icon>
+  </div>
+  
+  <!-- Message Content -->
+  <div class="max-w-[80%] p-4 rounded-xl backdrop-blur-sm border border-white/20"
+       [ngClass]="{
+         'bg-blue-500/20 text-white': message.role === 'user',
+         'bg-white/10 text-white': message.role === 'assistant'
+       }">
+    
+    <div class="whitespace-pre-wrap text-white [&_*]:text-white [&_strong]:text-white [&_strong]:font-semibold" 
+         [innerHTML]="formatMessageContent(message.content)" 
+         (click)="onMessageClick()" 
+         [class.cursor-pointer]="canSkipTypewriter">
+      <span *ngIf="showTypewriterCursor" class="animate-pulse">|</span>
+    </div>
+    
+    <!-- Air Quality Card -->
+    <app-air-quality-card 
+      *ngIf="hasAirQualityData()" 
+      [airQuality]="extractAirQualityData()!">
+    </app-air-quality-card>
+    
+    <div class="text-xs mt-2 opacity-70"
+         [ngClass]="{
+           'text-blue-100': message.role === 'user',
+           'text-slate-300': message.role === 'assistant'
+         }">
+      {{formatTimestamp(message.timestamp)}}
+    </div>
+  </div>
+</div>

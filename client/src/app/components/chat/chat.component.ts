@@ -1,33 +1,60 @@
-import { Component, OnInit, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, AfterViewChecked, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { WeatherService, ChatMessage, ChatSession, ChatRequest } from '../../services/weather.service';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { WeatherService } from '../../services/weather.service';
+import { ChatMessage, ChatSession } from './models/chat.models';
+import { ChatMessageComponent } from './chat-message/chat-message.component';
+import { ChatInputComponent } from './chat-input/chat-input.component';
+import { SessionListComponent } from './session-list/session-list.component';
 
 @Component({
   selector: 'app-chat',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [
+    CommonModule,
+    MatSnackBarModule,
+    MatIconModule,
+    MatButtonModule,
+    MatSlideToggleModule,
+    ChatMessageComponent,
+    ChatInputComponent,
+    SessionListComponent
+  ],
   templateUrl: './chat.component.html',
+  styles: [`
+    ::ng-deep .mat-mdc-slide-toggle .mdc-form-field {
+      color: white !important;
+    }
+    
+    ::ng-deep .mat-mdc-slide-toggle.mdc-switch--checked .mdc-switch__track {
+      background-color: #10b981 !important;
+    }
+    
+    ::ng-deep .mat-mdc-slide-toggle:not(.mdc-switch--checked) .mdc-switch__track {
+      background-color: #ef4444 !important;
+    }
+  `]
 })
 export class ChatComponent implements OnInit, AfterViewChecked {
   @ViewChild('chatContainer') chatContainer!: ElementRef;
-  @ViewChild('messageInput') messageInput!: ElementRef;
+  @ViewChild('chatInput') chatInput!: ChatInputComponent;
 
   // Chat state
   messages: ChatMessage[] = [];
   displayedMessages: ChatMessage[] = [];
   currentSession: ChatSession | null = null;
-  userMessage: string = '';
   loading: boolean = false;
   error: string = '';
   typewriterActive: boolean = false;
 
-
   // Session management
   sessions: ChatSession[] = [];
-  showSessionList: boolean = false;
+  showSessionList: boolean = true; // Changed to true to show by default
 
-  constructor(private weatherService: WeatherService) { }
+  constructor(private weatherService: WeatherService, private cdr: ChangeDetectorRef, private snackBar: MatSnackBar) { }
 
   ngOnInit(): void {
     this.checkHealth();
@@ -52,7 +79,6 @@ export class ChatComponent implements OnInit, AfterViewChecked {
     });
   }
 
-
   loadSessions(): void {
     this.weatherService.getChatSessions().subscribe({
       next: (data) => {
@@ -67,26 +93,34 @@ export class ChatComponent implements OnInit, AfterViewChecked {
   }
 
   createNewSession(): void {
-    this.weatherService.createChatSession().subscribe({
-      next: (session) => {
-        this.currentSession = session;
-        this.messages = [];
-        this.displayedMessages = [];
-        this.loadSessions();
-        this.focusInput();
-      },
-      error: (err) => {
-        this.error = 'Failed to create session: ' + err.message;
-      }
-    });
+    // If there's already a current session, create a new one
+    if (this.currentSession) {
+      this.weatherService.createChatSession().subscribe({
+        next: (session) => {
+          this.currentSession = session;
+          this.messages = [];
+          this.displayedMessages = [];
+          this.loadSessions();
+          this.focusInput();
+        },
+        error: (err) => {
+          this.error = 'Failed to create session: ' + err.message;
+        }
+      });
+    } else {
+      // If no current session, just clear the messages without creating a new session
+      this.messages = [];
+      this.displayedMessages = [];
+      this.focusInput();
+    }
   }
 
-  loadSession(sessionId: string): void {
-    this.weatherService.getChatSession(sessionId).subscribe({
-      next: async (session) => {
-        this.currentSession = session;
-        this.messages = session.messages;
-        this.displayedMessages = [...session.messages]; // Load all messages without typewriter effect
+  loadSession(session: ChatSession): void {
+    this.weatherService.getChatSession(session.session_id).subscribe({
+      next: (sessionData) => {
+        this.currentSession = sessionData;
+        this.messages = sessionData.messages;
+        this.displayedMessages = [...this.messages];
         this.showSessionList = false;
         this.focusInput();
       },
@@ -99,12 +133,12 @@ export class ChatComponent implements OnInit, AfterViewChecked {
   deleteSession(sessionId: string): void {
     this.weatherService.deleteChatSession(sessionId).subscribe({
       next: () => {
-        this.loadSessions();
         if (this.currentSession?.session_id === sessionId) {
           this.currentSession = null;
           this.messages = [];
           this.displayedMessages = [];
         }
+        this.loadSessions();
       },
       error: (err) => {
         this.error = 'Failed to delete session: ' + err.message;
@@ -112,96 +146,76 @@ export class ChatComponent implements OnInit, AfterViewChecked {
     });
   }
 
-  async sendMessage(): Promise<void> {
-    if (!this.userMessage.trim() || this.loading) return;
-
-    const request: ChatRequest = {
-      message: this.userMessage.trim(),
-      session_id: this.currentSession?.session_id
-    };
+  sendMessage(message: string): void {
+    if (!message.trim() || this.loading) return;
 
     this.loading = true;
     this.error = '';
 
+    const request = {
+      message: message.trim(),
+      session_id: this.currentSession?.session_id
+    };
+
     this.weatherService.sendChatMessage(request).subscribe({
       next: async (response) => {
+        // Add user message
+        const userMessage: ChatMessage = {
+          role: 'user',
+          content: message.trim(),
+          timestamp: new Date().toISOString(),
+          message_id: 'temp-user-' + Date.now()
+        };
+        this.messages.push(userMessage);
+
+        // Add AI response
+        const aiMessage: ChatMessage = {
+          role: 'assistant',
+          content: response.response,
+          timestamp: response.timestamp,
+          message_id: response.message_id
+        };
+        this.messages.push(aiMessage);
+
+        // Check if this was a new session before updating currentSession
+        const wasNewSession = !this.currentSession;
+
         // Update current session
         this.currentSession = {
           session_id: response.session_id,
-          messages: [...this.messages, {
-            role: 'user',
-            content: this.userMessage.trim(),
-            timestamp: new Date().toISOString(),
-            message_id: 'temp-user-' + Date.now()
-          }, {
-            role: 'assistant',
-            content: response.response,
-            timestamp: response.timestamp,
-            message_id: response.message_id
-          }],
+          messages: this.messages,
           created_at: this.currentSession?.created_at || new Date().toISOString(),
           last_activity: response.timestamp
         };
 
-        this.messages = this.currentSession.messages;
-        this.userMessage = '';
+        // Always refresh the sessions list to update message counts
         this.loadSessions();
-        this.focusInput();
-        
-        // Apply typewriter effect to the new AI response
+
+        // Stop loading immediately when response arrives
+        this.loading = false;
+        this.cdr.detectChanges(); // Force change detection to hide loading indicator
+
+        // Then start typewriter effect
         await this.updateDisplayedMessages();
+        this.focusInput();
       },
       error: (err) => {
         this.error = 'Failed to send message: ' + err.message;
         this.loading = false;
-      },
-      complete: () => {
-        this.loading = false;
+        this.cdr.detectChanges(); // Force change detection
       }
     });
   }
 
-  onKeyPress(event: KeyboardEvent): void {
-    if (event.key === 'Enter' && !event.shiftKey) {
-      event.preventDefault();
-      this.sendMessage();
-    }
-  }
-
-  focusInput(): void {
-    setTimeout(() => {
-      this.messageInput.nativeElement.focus();
-    }, 100);
-  }
-
-  formatTimestamp(timestamp: string): string {
-    return new Date(timestamp).toLocaleTimeString();
-  }
-
-  formatMessageContent(content: string): string {
-    // Convert **text** to <strong>text</strong>
-    return content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-  }
-
-  getSessionPreview(session: ChatSession): string {
-    const lastMessage = session.messages[session.messages.length - 1];
-    if (!lastMessage) return 'Empty session';
+  async updateDisplayedMessages(): Promise<void> {
+    this.displayedMessages = [...this.messages];
     
-    // Remove markdown formatting for preview
-    const cleanContent = lastMessage.content.replace(/\*\*(.*?)\*\*/g, '$1');
-    return cleanContent.substring(0, 50) + (cleanContent.length > 50 ? '...' : '');
-  }
-
-  cleanupSessions(): void {
-    this.weatherService.cleanupExpiredSessions().subscribe({
-      next: (response) => {
-        console.log(response.message);
-        this.loadSessions();
-      },
-      error: (err) => {
-        this.error = 'Failed to cleanup sessions: ' + err.message;
-      }
-    });
+    // Apply typewriter effect to the last AI message
+    const lastMessage = this.messages[this.messages.length - 1];
+    if (lastMessage && lastMessage.role === 'assistant') {
+      const lastIndex = this.messages.length - 1;
+      await this.typewriterEffect(lastMessage, lastIndex);
+    }
   }
 
   async typewriterEffect(message: ChatMessage, index: number): Promise<void> {
@@ -228,43 +242,103 @@ export class ChatComponent implements OnInit, AfterViewChecked {
         content: currentText
       };
       
-      // Add a small delay between characters with slight variation for realism
-      const delay = 15 + Math.random() * 10; // 15-25ms delay
+      // Random delay between 15-25ms for natural typing effect
+      const delay = Math.random() * 10 + 15;
       await new Promise(resolve => setTimeout(resolve, delay));
     }
     
-    // Ensure the final message is complete
-    this.displayedMessages[index] = {
-      ...typewriterMessage,
-      content: fullText
-    };
-    
     this.typewriterActive = false;
-  }
-
-  async updateDisplayedMessages(): Promise<void> {
-    // Stop any active typewriter effect
-    this.typewriterActive = false;
-    
-    // Wait a bit to ensure the effect stops
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
-    // Update displayed messages to match actual messages
-    this.displayedMessages = [...this.messages];
-    
-    // Apply typewriter effect to the last assistant message if it's new
-    if (this.messages.length > 0) {
-      const lastMessage = this.messages[this.messages.length - 1];
-      if (lastMessage.role === 'assistant') {
-        const lastIndex = this.messages.length - 1;
-        await this.typewriterEffect(lastMessage, lastIndex);
-      }
-    }
   }
 
   skipTypewriter(): void {
-    // Stop typewriter effect and show full message immediately
     this.typewriterActive = false;
-    this.displayedMessages = [...this.messages];
+    // The last message will be fully displayed on the next change detection cycle
+  }
+
+  toggleSessionList(): void {
+    this.showSessionList = !this.showSessionList;
+    this.cdr.detectChanges(); // Force change detection
+  }
+
+  cleanupSessions(): void {
+    this.weatherService.cleanupExpiredSessions().subscribe({
+      next: (response) => {
+        this.loadSessions();
+        this.snackBar.open('Sessions cleaned up successfully!', 'Close', {
+          duration: 3000,
+          horizontalPosition: 'center',
+          verticalPosition: 'top',
+          panelClass: ['success-toast']
+        });
+      },
+      error: (err) => {
+        this.error = 'Failed to cleanup sessions: ' + err.message;
+        this.snackBar.open('Failed to cleanup sessions', 'Close', {
+          duration: 3000,
+          horizontalPosition: 'center',
+          verticalPosition: 'top',
+          panelClass: ['error-toast']
+        });
+      }
+    });
+  }
+
+  clearAllSessions(): void {
+    this.weatherService.deleteAllSessions().subscribe({
+      next: (response) => {
+        this.currentSession = null;
+        this.messages = [];
+        this.displayedMessages = [];
+        this.loadSessions();
+        this.snackBar.open('All sessions deleted successfully!', 'Close', {
+          duration: 3000,
+          horizontalPosition: 'center',
+          verticalPosition: 'top',
+          panelClass: ['success-toast']
+        });
+      },
+      error: (err) => {
+        this.error = 'Failed to delete all sessions: ' + err.message;
+        this.snackBar.open('Failed to delete all sessions', 'Close', {
+          duration: 3000,
+          horizontalPosition: 'center',
+          verticalPosition: 'top',
+          panelClass: ['error-toast']
+        });
+      }
+    });
+  }
+
+  getFirstUserMessage(session: ChatSession): string {
+    if (!session.messages || session.messages.length === 0) {
+      return 'Empty session';
+    }
+    
+    // Find the first user message
+    const firstUserMessage = session.messages.find(msg => msg.role === 'user');
+    
+    if (!firstUserMessage) {
+      return 'No user messages';
+    }
+    
+    // Truncate long messages and clean up formatting
+    let content = firstUserMessage.content.trim();
+    
+    // Remove markdown formatting for cleaner display
+    content = content.replace(/\*\*(.*?)\*\*/g, '$1'); // Remove bold formatting
+    content = content.replace(/\*(.*?)\*/g, '$1'); // Remove italic formatting
+    
+    // Truncate if too long (longer limit for header)
+    if (content.length > 80) {
+      content = content.substring(0, 77) + '...';
+    }
+    
+    return content || 'Empty message';
+  }
+
+  focusInput(): void {
+    setTimeout(() => {
+      this.chatInput.focus();
+    }, 100);
   }
 }

@@ -2,39 +2,9 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
+import { ChatMessage, ChatSession, ChatRequest, ChatResponse, SessionStats, HealthResponse } from '../components/chat/models/chat.models';
 
 
-export interface ChatMessage {
-  role: string;
-  content: string;
-  timestamp: string;
-  message_id: string;
-}
-
-export interface ChatSession {
-  session_id: string;
-  messages: ChatMessage[];
-  created_at: string;
-  last_activity: string;
-}
-
-export interface ChatRequest {
-  message: string;
-  session_id?: string;
-}
-
-export interface ChatResponse {
-  response: string;
-  session_id: string;
-  message_id: string;
-  timestamp: string;
-}
-
-export interface SessionStats {
-  total_sessions: number;
-  active_sessions: number;
-  expired_sessions: number;
-}
 
 @Injectable({
   providedIn: 'root'
@@ -73,8 +43,12 @@ export class WeatherService {
     return this.http.post<{message: string}>(`${this.apiUrl}/chat/cleanup`, {});
   }
 
+  deleteAllSessions(): Observable<{message: string}> {
+    return this.http.delete<{message: string}>(`${this.apiUrl}/chat/sessions`);
+  }
+
   // Health check
-  getHealth(): Observable<any> {
-    return this.http.get(`${this.apiUrl}/health`);
+  getHealth(): Observable<HealthResponse> {
+    return this.http.get<HealthResponse>(`${this.apiUrl}/health`);
   }
 }
