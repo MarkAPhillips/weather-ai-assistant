@@ -1,9 +1,8 @@
-import { Component, OnInit, ViewChild, ElementRef, AfterViewChecked, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, AfterViewChecked, ChangeDetectorRef, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
-import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { WeatherService } from '../../services/weather.service';
 import { ChatMessage, ChatSession } from './models/chat.models';
 import { ChatMessageComponent } from './chat-message/chat-message.component';
@@ -18,25 +17,11 @@ import { SessionListComponent } from './session-list/session-list.component';
     MatSnackBarModule,
     MatIconModule,
     MatButtonModule,
-    MatSlideToggleModule,
     ChatMessageComponent,
     ChatInputComponent,
     SessionListComponent
   ],
-  templateUrl: './chat.component.html',
-  styles: [`
-    ::ng-deep .mat-mdc-slide-toggle .mdc-form-field {
-      color: white !important;
-    }
-    
-    ::ng-deep .mat-mdc-slide-toggle.mdc-switch--checked .mdc-switch__track {
-      background-color: #10b981 !important;
-    }
-    
-    ::ng-deep .mat-mdc-slide-toggle:not(.mdc-switch--checked) .mdc-switch__track {
-      background-color: #ef4444 !important;
-    }
-  `]
+  templateUrl: './chat.component.html'
 })
 export class ChatComponent implements OnInit, AfterViewChecked {
   @ViewChild('chatContainer') chatContainer!: ElementRef;
@@ -52,9 +37,10 @@ export class ChatComponent implements OnInit, AfterViewChecked {
 
   // Session management
   sessions: ChatSession[] = [];
-  showSessionList: boolean = true; // Changed to true to show by default
+  showSessionList: boolean = true;
+  toggleValue: string = 'yes'; // Changed to 'yes' to match the template
 
-  constructor(private weatherService: WeatherService, private cdr: ChangeDetectorRef, private snackBar: MatSnackBar) { }
+  constructor(private weatherService: WeatherService, private cdr: ChangeDetectorRef, private snackBar: MatSnackBar, private ngZone: NgZone) { }
 
   ngOnInit(): void {
     this.checkHealth();
@@ -74,7 +60,9 @@ export class ChatComponent implements OnInit, AfterViewChecked {
 
   checkHealth(): void {
     this.weatherService.getHealth().subscribe({
-      next: (data) => console.log('Backend health:', data),
+      next: (data) => {
+        // Health check successful
+      },
       error: (err) => console.error('Backend health check failed:', err)
     });
   }
@@ -255,10 +243,6 @@ export class ChatComponent implements OnInit, AfterViewChecked {
     // The last message will be fully displayed on the next change detection cycle
   }
 
-  toggleSessionList(): void {
-    this.showSessionList = !this.showSessionList;
-    this.cdr.detectChanges(); // Force change detection
-  }
 
   cleanupSessions(): void {
     this.weatherService.cleanupExpiredSessions().subscribe({
@@ -340,5 +324,11 @@ export class ChatComponent implements OnInit, AfterViewChecked {
     setTimeout(() => {
       this.chatInput.focus();
     }, 100);
+  }
+
+  useExamplePrompt(prompt: string): void {
+    // Set the message in the input component and send it
+    this.chatInput.setMessage(prompt);
+    this.sendMessage(prompt);
   }
 }

@@ -63,6 +63,108 @@ mat-icon {
   font-size: 24px !important;
 }
 
+/* Material Form Field Dark Theme Overrides */
+.mat-mdc-form-field {
+  --mdc-filled-text-field-container-color: rgba(255, 255, 255, 0.05);
+  --mdc-filled-text-field-active-indicator-color: rgba(147, 51, 234, 0.8);
+  --mdc-filled-text-field-hover-state-layer-color: rgba(255, 255, 255, 0.1);
+  --mdc-filled-text-field-focus-active-indicator-color: rgba(147, 51, 234, 0.8);
+  --mdc-filled-text-field-focus-hover-state-layer-color: rgba(147, 51, 234, 0.1);
+}
+
+.mat-mdc-form-field .mat-mdc-text-field-wrapper {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  border: none !important;
+  border-radius: 8px !important;
+}
+
+.mat-mdc-form-field .mat-mdc-text-field-wrapper .mat-mdc-form-field-flex {
+  border: none !important;
+}
+
+.mat-mdc-form-field .mat-mdc-text-field-wrapper .mat-mdc-form-field-flex .mat-mdc-floating-label {
+  color: rgba(203, 213, 225, 0.8) !important;
+}
+
+.mat-mdc-form-field .mat-mdc-text-field-wrapper .mat-mdc-form-field-flex .mat-mdc-floating-label.mdc-floating-label--float-above {
+  color: rgba(203, 213, 225, 0.6) !important;
+}
+
+.mat-mdc-form-field input {
+  color: white !important;
+  border: none !important;
+  outline: none !important;
+  background: transparent !important;
+  caret-color: white !important;
+}
+
+.mat-mdc-form-field input::placeholder {
+  color: rgba(148, 163, 184, 0.6) !important;
+}
+
+.mat-mdc-form-field .mat-mdc-text-field-wrapper .mat-mdc-form-field-flex .mat-mdc-form-field-infix {
+  border: none !important;
+}
+
+.mat-mdc-form-field .mat-mdc-text-field-wrapper .mat-mdc-form-field-flex .mat-mdc-form-field-infix::before {
+  border: none !important;
+}
+
+.mat-mdc-form-field .mat-mdc-text-field-wrapper .mat-mdc-form-field-flex .mat-mdc-form-field-infix::after {
+  border: none !important;
+}
+
+.mat-mdc-form-field .mat-mdc-text-field-wrapper .mat-mdc-form-field-flex .mat-mdc-form-field-infix .mat-mdc-form-field-infix {
+  border: none !important;
+}
+
+/* Focus and Active state styling - both use purple */
+.mat-mdc-form-field.mat-focused .mat-mdc-text-field-wrapper .mat-mdc-form-field-flex .mat-mdc-form-field-infix::after {
+  border-bottom-color: rgba(147, 51, 234, 0.8) !important;
+}
+
+.mat-mdc-form-field.mat-focused .mat-mdc-text-field-wrapper .mat-mdc-form-field-flex .mat-mdc-form-field-infix::before {
+  border-bottom-color: rgba(147, 51, 234, 0.8) !important;
+}
+
+/* Active state (when typing) - same purple as focus */
+.mat-mdc-form-field.mat-focused .mat-mdc-text-field-wrapper .mat-mdc-form-field-flex .mat-mdc-form-field-infix::after {
+  border-bottom-color: rgba(147, 51, 234, 0.8) !important;
+}
+
+.mat-mdc-raised-button.mat-mdc-button-disabled {
+  background-color: rgba(156, 163, 175, 0.3) !important;
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+
+
+/* Material Button Toggle Dark Theme Overrides */
+.mat-mdc-button-toggle-group {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 6px !important;
+  height: 32px !important;
+}
+
+.mat-mdc-button-toggle {
+  color: rgba(255, 255, 255, 0.7) !important;
+  background-color: transparent !important;
+  border: none !important;
+  min-width: 40px !important;
+  height: 32px !important;
+  font-size: 12px !important;
+}
+
+.mat-mdc-button-toggle.mat-mdc-button-toggle-checked {
+  background-color: rgba(147, 51, 234, 0.8) !important;
+  color: white !important;
+}
+
+.mat-mdc-button-toggle:hover:not(.mat-mdc-button-toggle-checked) {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  color: white !important;
+}
+
 /* Action Icon Hover Effect - matches input field styling */
 @layer components {
   .action-icon {

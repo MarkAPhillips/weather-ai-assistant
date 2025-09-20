@@ -1,6 +1,6 @@
-<div class="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-  <!-- Background Pattern -->
-  <div class="absolute inset-0 opacity-20">
+<div class="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative">
+  <!-- Subtle Background Pattern -->
+  <div class="absolute inset-0 opacity-5">
     <div class="w-full h-full bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.15)_1px,transparent_0)] bg-[length:20px_20px]"></div>
   </div>
   
@@ -9,8 +9,8 @@
     <div class="backdrop-blur-xl bg-white/10 border border-white/20 rounded-2xl p-8 mb-8 shadow-2xl">
       <div class="flex items-center justify-between">
         <div>
-          <h1 class="text-4xl font-bold text-white mb-3 flex items-center">
-            <mat-icon class="text-4xl mr-3 text-yellow-400 drop-shadow-lg">wb_sunny</mat-icon>
+          <h1 class="text-5xl font-bold text-white mb-3 flex items-center">
+            <mat-icon class="text-5xl mr-3 text-yellow-400 drop-shadow-lg">wb_sunny</mat-icon>
             Weather AI Chat
           </h1>
           <p class="text-slate-300 text-lg">Intelligent weather insights powered by AI</p>
@@ -42,16 +42,28 @@
                 <h3 class="text-2xl font-bold text-white mb-4">Welcome to Weather AI!</h3>
                 <p class="text-slate-300 text-lg mb-8">Get intelligent weather insights powered by AI</p>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
-                  <div class="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10">
+                  <div 
+                    class="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10 cursor-pointer hover:bg-white/10 hover:border-white/20 transition-all duration-200"
+                    (click)="useExamplePrompt('What\'s the weather like in London?')"
+                  >
                     <p class="text-slate-300 text-sm">"What's the weather like in London?"</p>
                   </div>
-                  <div class="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10">
+                  <div 
+                    class="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10 cursor-pointer hover:bg-white/10 hover:border-white/20 transition-all duration-200"
+                    (click)="useExamplePrompt('Will it rain tomorrow in Tokyo?')"
+                  >
                     <p class="text-slate-300 text-sm">"Will it rain tomorrow in Tokyo?"</p>
                   </div>
-                  <div class="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10">
+                  <div 
+                    class="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10 cursor-pointer hover:bg-white/10 hover:border-white/20 transition-all duration-200"
+                    (click)="useExamplePrompt('Should I bring an umbrella to New York?')"
+                  >
                     <p class="text-slate-300 text-sm">"Should I bring an umbrella to New York?"</p>
                   </div>
-                  <div class="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10">
+                  <div 
+                    class="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10 cursor-pointer hover:bg-white/10 hover:border-white/20 transition-all duration-200"
+                    (click)="useExamplePrompt('What\'s the forecast for Paris this weekend?')"
+                  >
                     <p class="text-slate-300 text-sm">"What's the forecast for Paris this weekend?"</p>
                   </div>
                 </div>
@@ -99,6 +111,28 @@
         <!-- Session Controls -->
         <div class="backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-4 mb-4 shadow-2xl">
           <div class="flex flex-col gap-3">
+            
+            <div class="flex items-center justify-between w-full">
+              <span class="text-sm text-white">Sessions?</span>
+              <div class="flex ml-2">
+                <button 
+                  [class]="showSessionList ? 'text-white' : 'bg-white/10 text-slate-300'"
+                  [style.background-color]="showSessionList ? '#3f51b5' : ''"
+                  (click)="showSessionList = true; toggleValue = 'yes'"
+                  class="px-3 py-1 text-xs rounded-l-md border border-white/20 hover:bg-white/20 transition-colors"
+                >
+                  Yes
+                </button>
+                <button 
+                  [class]="!showSessionList ? 'text-white' : 'bg-white/10 text-slate-300'"
+                  [style.background-color]="!showSessionList ? '#3f51b5' : ''"
+                  (click)="showSessionList = false; toggleValue = 'no'"
+                  class="px-3 py-1 text-xs rounded-r-md border border-white/20 border-l-0 hover:bg-white/20 transition-colors"
+                >
+                  No
+                </button>
+              </div>
+            </div>
             <button 
               mat-raised-button 
               color="primary"
@@ -107,14 +141,6 @@
             >
               New Chat
             </button>
-            <mat-slide-toggle 
-              [checked]="showSessionList"
-              (change)="toggleSessionList()"
-              color="primary"
-              class="text-sm text-white"
-            >
-              Show Sessions
-            </mat-slide-toggle>
           </div>
         </div>
         

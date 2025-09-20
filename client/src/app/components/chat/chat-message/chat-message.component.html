@@ -4,10 +4,10 @@
   <!-- Avatar -->
   <div class="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/20"
        [ngClass]="{
-         'bg-blue-500/30 text-white': message.role === 'user',
+         'bg-blue-500/30': message.role === 'user',
          'bg-purple-500/30 text-white': message.role === 'assistant'
        }">
-    <mat-icon *ngIf="message.role === 'user'" class="text-lg">person</mat-icon>
+    <mat-icon *ngIf="message.role === 'user'" class="text-lg text-white">person</mat-icon>
     <mat-icon *ngIf="message.role === 'assistant'" class="text-lg">smart_toy</mat-icon>
   </div>
   

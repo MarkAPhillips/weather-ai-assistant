@@ -126,4 +126,8 @@ export class ChatInputComponent {
   clear(): void {
     this.message = '';
   }
+
+  setMessage(text: string): void {
+    this.message = text;
+  }
 }

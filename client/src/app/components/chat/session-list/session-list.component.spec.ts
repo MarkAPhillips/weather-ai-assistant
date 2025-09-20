@@ -76,7 +76,7 @@ describe('SessionListComponent', () => {
       fixture.detectChanges();
 
       const compiled = fixture.nativeElement;
-      expect(compiled.textContent).toContain('No sessions yet');
+      expect(compiled.textContent).toContain('No sessions created');
     });
   });
 
