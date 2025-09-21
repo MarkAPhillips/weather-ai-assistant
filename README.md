@@ -242,14 +242,12 @@ The project includes automated CI/CD pipelines:
 
 #### Required GitHub Secrets
 ```
-ENVIRONMENT=production
-GOOGLE_API_KEY=your_google_api_key
-OPENWEATHER_API_KEY=your_openweather_api_key
-LANGCHAIN_API_KEY=your_langchain_api_key
 RENDER_API_KEY=your_render_api_key
 RENDER_API_SERVICE_ID=your_backend_service_id
 RENDER_UI_SERVICE_ID=your_frontend_service_id
 ```
+
+**Note**: API keys (`GOOGLE_API_KEY`, `OPENWEATHER_API_KEY`, `LANGCHAIN_API_KEY`) are stored in Render environment variables, not GitHub secrets.
 
 ## 🛠️ Troubleshooting
 
