@@ -68,6 +68,12 @@ class SessionManager:
             return True
         return False
 
+    def delete_all_sessions(self) -> int:
+        """Delete all sessions."""
+        count = len(self.sessions)
+        self.sessions.clear()
+        return count
+
     def list_sessions(self, limit: int = 50) -> List[ChatSession]:
         """List all active sessions."""
         valid_sessions = []

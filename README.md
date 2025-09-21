@@ -1,16 +1,32 @@
 # Weather AI Assistant
 
-A conversational weather application powered by AI that provides current weather conditions, forecasts, and personalized advice. Built with Angular frontend and FastAPI backend, featuring session management and context-aware conversations.
+A conversational weather application powered by AI that provides current weather conditions, forecasts, air quality data, and personalized advice. Built with Angular frontend and FastAPI backend, featuring session management, context-aware conversations, and a modern glassmorphism UI.
 
 ## 🌟 Features
 
+### Core Functionality
 - **AI-Powered Weather Chat**: Conversational interface with Google Gemini AI
 - **Current Weather & Forecasts**: Real-time weather data and 5-day forecasts
+- **Air Quality Monitoring**: AQI data with health recommendations
 - **Session Management**: Persistent chat sessions with conversation history
 - **Context-Aware Responses**: AI remembers previous conversations
+- **Multi-turn Conversations**: Follow-up questions and conversation continuity
+
+### User Experience
 - **Typewriter Effect**: Smooth, character-by-character response display
-- **Responsive Design**: Modern UI with Tailwind CSS
+- **Clickable Example Prompts**: Quick-start conversation starters
+- **Glassmorphism UI**: Modern dark theme with frosted glass effects
+- **Responsive Design**: Works on desktop, tablet, and mobile
+- **Material Design Integration**: Angular Material components
+- **Toast Notifications**: Themed notifications for user feedback
+
+### Technical Features
+- **Component Architecture**: Modular Angular components for maintainability
+- **Standalone Components**: Modern Angular architecture
+- **Tailwind CSS**: Utility-first styling framework
 - **Free Hosting**: Deployed on Render with GitHub Actions CI/CD
+- **Comprehensive Testing**: Unit tests for components and services
+- **Error Handling**: Graceful error handling and user feedback
 
 ## 📋 Prerequisites
 
@@ -127,26 +143,63 @@ The application will be available at: `http://localhost:4200`
 
 ```
 weather-ai-assistant/
-├── client/                 # Angular frontend
+├── client/                          # Angular frontend
 │   ├── src/
 │   │   ├── app/
 │   │   │   ├── components/
-│   │   │   │   └── chat/          # Chat component
-│   │   │   └── services/
-│   │   │       └── weather.service.ts
-│   │   └── environments/           # Environment configs
-│   ├── package.json
-│   └── angular.json
-├── server/                 # FastAPI backend
-│   ├── main.py            # FastAPI app
-│   ├── weather_agent.py   # AI weather agent
-│   ├── session_manager.py # Session management
-│   ├── models.py          # Pydantic models
-│   └── requirements.txt
-├── .github/workflows/     # CI/CD pipelines
-│   ├── api-build-and-deploy.yml
-│   └── ui-build-and-deploy.yml
-└── README.md
+│   │   │   │   └── chat/            # Chat system components
+│   │   │   │       ├── air-quality-card/     # Air quality display
+│   │   │   │       │   ├── air-quality-card.component.ts
+│   │   │   │       │   └── air-quality-card.component.spec.ts
+│   │   │   │       ├── chat-header/         # Chat header component
+│   │   │   │       │   ├── chat-header.component.ts
+│   │   │   │       │   └── chat-header.component.spec.ts
+│   │   │   │       ├── chat-input/           # Message input component
+│   │   │   │       │   ├── chat-input.component.ts
+│   │   │   │       │   └── chat-input.component.spec.ts
+│   │   │   │       ├── chat-message/        # Individual message component
+│   │   │   │       │   ├── chat-message.component.ts
+│   │   │   │       │   ├── chat-message.component.html
+│   │   │   │       │   └── chat-message.component.spec.ts
+│   │   │   │       ├── session-list/       # Session management component
+│   │   │   │       │   ├── session-list.component.ts
+│   │   │   │       │   ├── session-list.component.html
+│   │   │   │       │   └── session-list.component.spec.ts
+│   │   │   │       ├── models/             # TypeScript interfaces
+│   │   │   │       │   └── chat.models.ts
+│   │   │   │       ├── chat.component.ts   # Main chat orchestrator
+│   │   │   │       ├── chat.component.html # Main chat template
+│   │   │   │       └── chat.component.spec.ts
+│   │   │   ├── services/
+│   │   │   │   ├── weather.service.ts       # API service
+│   │   │   │   └── weather.service.spec.ts
+│   │   │   ├── app.component.ts             # Root component
+│   │   │   ├── app.config.ts                # App configuration
+│   │   │   └── app.routes.ts                # Routing configuration
+│   │   ├── environments/                    # Environment configs
+│   │   │   ├── environment.ts               # Development config
+│   │   │   └── environment.prod.ts          # Production config
+│   │   ├── index.html                       # Main HTML file
+│   │   ├── index.css                        # Global styles
+│   │   └── main.ts                          # App bootstrap
+│   ├── package.json                         # Dependencies
+│   ├── angular.json                         # Angular configuration
+│   ├── tailwind.config.js                   # Tailwind CSS config
+│   └── tsconfig.json                        # TypeScript config
+├── server/                          # FastAPI backend
+│   ├── main.py                      # FastAPI application
+│   ├── weather_agent.py             # AI weather agent with LangChain
+│   ├── air_quality_service.py       # Air quality data service
+│   ├── session_manager.py            # Chat session management
+│   ├── models.py                     # Pydantic data models
+│   ├── test_main.py                  # Backend tests
+│   ├── requirements.txt              # Python dependencies
+│   └── venv/                         # Virtual environment
+├── .github/workflows/                # CI/CD pipelines
+│   ├── api-build-and-deploy.yml      # Backend deployment
+│   └── ui-build-and-deploy.yml       # Frontend deployment
+├── Dockerfile                        # Docker configuration
+└── README.md                         # This file
 ```
 
 ## 🔧 Development
@@ -322,17 +375,87 @@ GET /api/health
 
 #### Chat Endpoints
 ```
-POST /api/chat/send          # Send message
-GET  /api/chat/sessions       # List sessions
-GET  /api/chat/sessions/{id}  # Get session
-POST /api/chat/sessions       # Create session
-DELETE /api/chat/sessions/{id} # Delete session
-GET  /api/chat/stats          # Session statistics
-POST /api/chat/cleanup        # Cleanup expired sessions
+POST /api/chat/send              # Send message
+GET  /api/chat/sessions          # List sessions
+GET  /api/chat/sessions/{id}     # Get session
+POST /api/chat/sessions          # Create session
+DELETE /api/chat/sessions/{id}    # Delete session
+DELETE /api/chat/sessions         # Delete all sessions
+GET  /api/chat/stats             # Session statistics
+POST /api/chat/cleanup           # Cleanup expired sessions
+```
+
+#### Root Endpoint
+```
+GET /                            # Basic connectivity test
+```
+
+### Data Models
+
+#### ChatMessage
+```typescript
+{
+  role: 'user' | 'assistant',
+  content: string,
+  timestamp: string
+}
+```
+
+#### ChatSession
+```typescript
+{
+  session_id: string,
+  messages: ChatMessage[],
+  created_at: string,
+  last_activity: string
+}
+```
+
+#### AirQualityData
+```typescript
+{
+  aqi?: number,
+  pm25?: number,
+  pm10?: number,
+  o3?: number,
+  no2?: number,
+  so2?: number,
+  co?: number,
+  location?: string,
+  timestamp?: string,
+  health_recommendations?: string[]
+}
 ```
 
 ### Interactive API Docs
 Visit `http://localhost:8000/docs` for Swagger UI documentation.
+
+## 🎨 UI Components & Features
+
+### Component Architecture
+The frontend uses a modular component architecture with standalone Angular components:
+
+#### Main Components
+- **`ChatComponent`**: Main orchestrator managing chat state and session handling
+- **`ChatMessageComponent`**: Displays individual messages with typewriter effect and air quality cards
+- **`ChatInputComponent`**: Handles message input with Material Design form fields
+- **`SessionListComponent`**: Manages session display, deletion, and cleanup
+- **`AirQualityCardComponent`**: Displays detailed air quality information with health recommendations
+
+#### Key Features
+- **Glassmorphism Design**: Dark theme with frosted glass effects using `backdrop-blur`
+- **Material Design Integration**: Angular Material components for consistent UI
+- **Tailwind CSS**: Utility-first styling for responsive design
+- **Typewriter Effect**: Smooth character-by-character message display
+- **Clickable Examples**: Pre-defined weather prompts for quick conversation starts
+- **Session Management**: Visual session list with cleanup and deletion options
+- **Toast Notifications**: Themed notifications matching the glassmorphism design
+
+### Styling System
+- **Global Styles**: `src/index.css` with Tailwind imports and Material Design overrides
+- **Component Styles**: Inline styles using Tailwind classes
+- **Theme Colors**: Dark gradient backgrounds with purple/slate color scheme
+- **Responsive Design**: Mobile-first approach with responsive breakpoints
 
 ## 🤝 Contributing
 
@@ -350,12 +473,15 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🙏 Acknowledgments
 
-- **OpenWeatherMap** for weather data API
-- **Google Gemini** for AI capabilities
-- **Angular** for frontend framework
-- **FastAPI** for backend framework
-- **Render** for free hosting
-- **Tailwind CSS** for styling
+- **OpenWeatherMap** for weather data and air quality APIs
+- **Google Gemini** for AI capabilities and natural language processing
+- **Angular** for the modern frontend framework
+- **FastAPI** for the high-performance backend framework
+- **LangChain** for AI agent orchestration and tool integration
+- **Render** for free hosting and deployment
+- **Tailwind CSS** for utility-first styling
+- **Angular Material** for consistent UI components
+- **GitHub Actions** for CI/CD automation
 
 ## 📞 Support
 

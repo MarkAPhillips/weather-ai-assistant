@@ -4,6 +4,8 @@ from datetime import datetime, timezone
 import logging
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langgraph.prebuilt import create_react_agent
+from air_quality_service import AirQualityService
+from models import AirQualityData, WeatherDataWithAirQuality
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -228,6 +230,7 @@ class WeatherAgent:
 
     def __init__(self, google_api_key: str, weather_api_key: str):
         self.weather_service = WeatherService(weather_api_key)
+        self.air_quality_service = AirQualityService(weather_api_key)
 
         # Initialise Gemini model
         self.model = ChatGoogleGenerativeAI(
@@ -243,11 +246,11 @@ class WeatherAgent:
             tools=[self.get_weather_tool],
             prompt=(
                 "You are a professional yet conversational weather assistant. You have access to "
-                "both current weather conditions and forecasts. When users ask about weather, use the "
-                "weather tool to get accurate data. Be informative and helpful while maintaining a "
+                "both current weather conditions, forecasts, and air quality data. When users ask about weather, use the "
+                "weather tool to get accurate data including air quality information. Be informative and helpful while maintaining a "
                 "natural, approachable tone. Use contractions and natural language, but avoid being "
-                "overly casual or repetitive. Provide accurate weather information and practical advice "
-                "in a professional yet friendly manner."
+                "overly casual or repetitive. Provide accurate weather information, air quality insights, and practical advice "
+                "in a professional yet friendly manner. Always mention air quality when relevant for health and outdoor activities."
             ),
         )
 
@@ -393,8 +396,34 @@ class WeatherAgent:
                         forecast_text += f", {total_rain:.1f}mm rain"
                     forecast_text += "\n"
         
-        return current_weather + forecast_text
-
+        # Get air quality data
+        air_quality_data = self.air_quality_service.get_air_quality_data(city, country)
+        
+        # Format air quality information
+        air_quality_text = ""
+        if air_quality_data:
+            # Check if user specifically asked for detailed air quality information
+            query_lower = query.lower()
+            wants_detailed_air_quality = any(keyword in query_lower for keyword in [
+                "detailed air quality", "air quality breakdown", "air quality details",
+                "air quality data", "pollution", "pm2.5", "pm10", "aqi", "air quality index"
+            ])
+            
+            if wants_detailed_air_quality:
+                # Provide detailed air quality breakdown
+                air_quality_summary = self.air_quality_service.get_air_quality_summary(air_quality_data)
+                air_quality_text = f"\nAir Quality: {air_quality_summary}"
+                
+                if air_quality_data.health_recommendations:
+                    air_quality_text += "\nHealth Recommendations:"
+                    for recommendation in air_quality_data.health_recommendations:
+                        air_quality_text += f"\n- {recommendation}"
+            else:
+                # Just mention air quality briefly
+                aqi_status = "Good" if air_quality_data.aqi <= 50 else "Moderate" if air_quality_data.aqi <= 100 else "Poor"
+                air_quality_text = f"\nAir Quality: {aqi_status} (AQI: {air_quality_data.aqi})"
+        
+        return current_weather + forecast_text + air_quality_text
 
     def get_weather_advice(self, query: str, conversation_history: List = None) -> str:
         """Get weather advice with conversation context."""
@@ -414,6 +443,12 @@ class WeatherAgent:
             the city name from their query, conversation context, or location context and call the weather 
             tool. The tool will automatically provide both current conditions and appropriate forecast data 
             based on the query. Always use the tool to get actual weather data before responding.
+            
+            AIR QUALITY INFORMATION:
+            - Mention air quality briefly when relevant for health (e.g., "The air quality is good today")
+            - Only provide detailed air quality breakdowns when users specifically ask for them
+            - Let users know they can ask for "detailed air quality" or "air quality breakdown" if interested
+            - Don't overwhelm users with technical air quality data unless requested
             
             RESPONSE STYLE:
             - Be professional but approachable - like a knowledgeable friend

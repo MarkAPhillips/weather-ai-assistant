@@ -148,11 +148,21 @@ async def delete_session(session_id: str):
 
 
 @app.post("/api/chat/sessions")
-async def create_session(request: Optional[ChatRequest] = None):
+async def create_session():
     """Create a new chat session."""
     try:
         session = session_manager.create_session()
         return session
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete("/api/chat/sessions")
+async def delete_all_sessions():
+    """Delete all chat sessions."""
+    try:
+        deleted_count = session_manager.delete_all_sessions()
+        return {"message": f"Deleted {deleted_count} sessions"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
