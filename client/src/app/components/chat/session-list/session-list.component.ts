@@ -108,7 +108,8 @@ export class SessionListComponent {
     this.snackBar.open('Removing old sessions...', 'Close', {
       duration: 2000,
       horizontalPosition: 'center',
-      verticalPosition: 'top'
+      verticalPosition: 'top',
+      panelClass: ['cleanup-toast']
     });
   }
 
@@ -116,7 +117,8 @@ export class SessionListComponent {
     this.snackBar.open('Deleting all sessions...', 'Close', {
       duration: 2000,
       horizontalPosition: 'center',
-      verticalPosition: 'top'
+      verticalPosition: 'top',
+      panelClass: ['cleanup-toast']
     });
   }
 }
