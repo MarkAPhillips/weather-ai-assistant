@@ -105,7 +105,7 @@ export class SessionListComponent {
   }
 
   private showCleanupToast(): void {
-    this.snackBar.open('Removing old sessions...', 'Close', {
+    this.snackBar.open('Removing old chat sessions...', 'Close', {
       duration: 2000,
       horizontalPosition: 'center',
       verticalPosition: 'top',
@@ -114,7 +114,7 @@ export class SessionListComponent {
   }
 
   private showClearAllToast(): void {
-    this.snackBar.open('Deleting all sessions...', 'Close', {
+    this.snackBar.open('Deleting all chat sessions...', 'Close', {
       duration: 2000,
       horizontalPosition: 'center',
       verticalPosition: 'top',

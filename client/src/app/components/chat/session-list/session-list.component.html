@@ -4,7 +4,7 @@
     <div class="flex items-center justify-between w-full">
       <div class="flex items-center gap-2">
         <mat-icon class="text-lg text-white">chat</mat-icon>
-        <span class="text-lg font-medium text-white">Sessions</span>
+        <span class="text-lg font-medium text-white">Chat Sessions</span>
       </div>
       <div class="flex items-center gap-2">
         <button 
@@ -63,7 +63,7 @@
       <!-- Empty state -->
       <div *ngIf="getSessionsWithMessages().length === 0" class="text-center py-8 px-4 text-slate-400">
         <mat-icon class="text-5xl w-12 h-12 mb-4 opacity-50 text-white">inbox</mat-icon>
-        <p>No sessions created</p>
+        <p>No chat sessions created</p>
       </div>
     </div>
   </div>
@@ -71,7 +71,7 @@
   <!-- Footer -->
   <div *ngIf="getSessionsWithMessages().length > 0" class="border-t border-white/10 py-2 px-4">
     <div class="text-xs text-slate-400 text-center">
-      Total: {{ getSessionsWithMessages().length }} sessions
+      Total: {{ getSessionsWithMessages().length }} chat sessions
     </div>
   </div>
 </div>

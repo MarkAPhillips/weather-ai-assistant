@@ -248,7 +248,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
     this.weatherService.cleanupExpiredSessions().subscribe({
       next: (response) => {
         this.loadSessions();
-        this.snackBar.open('Sessions cleaned up successfully!', 'Close', {
+        this.snackBar.open('Chat sessions cleaned up successfully!', 'Close', {
           duration: 3000,
           horizontalPosition: 'center',
           verticalPosition: 'top',
@@ -257,7 +257,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
       },
       error: (err) => {
         this.error = 'Failed to cleanup sessions: ' + err.message;
-        this.snackBar.open('Failed to cleanup sessions', 'Close', {
+        this.snackBar.open('Failed to cleanup chat sessions', 'Close', {
           duration: 3000,
           horizontalPosition: 'center',
           verticalPosition: 'top',
@@ -274,7 +274,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
         this.messages = [];
         this.displayedMessages = [];
         this.loadSessions();
-        this.snackBar.open('All sessions deleted successfully!', 'Close', {
+        this.snackBar.open('All chat sessions deleted successfully!', 'Close', {
           duration: 3000,
           horizontalPosition: 'center',
           verticalPosition: 'top',
@@ -283,7 +283,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
       },
       error: (err) => {
         this.error = 'Failed to delete all sessions: ' + err.message;
-        this.snackBar.open('Failed to delete all sessions', 'Close', {
+        this.snackBar.open('Failed to delete all chat sessions', 'Close', {
           duration: 3000,
           horizontalPosition: 'center',
           verticalPosition: 'top',

@@ -89,6 +89,7 @@ mat-icon {
   --mdc-filled-text-field-hover-state-layer-color: rgba(255, 255, 255, 0.1);
   --mdc-filled-text-field-focus-active-indicator-color: rgba(147, 51, 234, 0.8);
   --mdc-filled-text-field-focus-hover-state-layer-color: rgba(147, 51, 234, 0.1);
+  --mdc-filled-text-field-hover-active-indicator-color: rgba(147, 51, 234, 0.8);
 }
 
 .mat-mdc-form-field .mat-mdc-text-field-wrapper {
@@ -149,6 +150,29 @@ mat-icon {
 /* Active state (when typing) - same purple as focus */
 .mat-mdc-form-field.mat-focused .mat-mdc-text-field-wrapper .mat-mdc-form-field-flex .mat-mdc-form-field-infix::after {
   border-bottom-color: rgba(147, 51, 234, 0.8) !important;
+}
+
+/* Hover state - same purple as focus and active */
+.mat-mdc-form-field:hover .mat-mdc-text-field-wrapper .mat-mdc-form-field-flex .mat-mdc-form-field-infix::after {
+  border-bottom-color: rgba(147, 51, 234, 0.8) !important;
+  border-bottom-width: 2px !important;
+}
+
+.mat-mdc-form-field:hover .mat-mdc-text-field-wrapper .mat-mdc-form-field-flex .mat-mdc-form-field-infix::before {
+  border-bottom-color: rgba(147, 51, 234, 0.8) !important;
+  border-bottom-width: 2px !important;
+}
+
+/* Additional hover selectors for better coverage */
+.mat-mdc-form-field:hover .mat-mdc-text-field-wrapper .mat-mdc-form-field-flex .mat-mdc-form-field-infix {
+  border-bottom-color: rgba(147, 51, 234, 0.8) !important;
+  border-bottom-width: 2px !important;
+}
+
+/* Target the Material Design bottom border directly */
+.mat-mdc-form-field:hover .mat-mdc-text-field-wrapper .mat-mdc-form-field-flex .mat-mdc-form-field-infix .mat-mdc-form-field-infix::after {
+  border-bottom-color: rgba(147, 51, 234, 0.8) !important;
+  border-bottom-width: 2px !important;
 }
 
 .mat-mdc-raised-button.mat-mdc-button-disabled {

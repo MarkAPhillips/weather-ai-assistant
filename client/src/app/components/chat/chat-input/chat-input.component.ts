@@ -30,7 +30,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
           [disabled]="loading || !message.trim()"
           class="text-sm px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <span *ngIf="!loading">Send</span>
+          <span *ngIf="!loading">Ask</span>
           <span *ngIf="loading" class="flex items-center">
             <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
             Sending...
