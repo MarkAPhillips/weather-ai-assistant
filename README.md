@@ -355,7 +355,7 @@ POST /api/chat/cleanup           # Cleanup expired sessions
 
 ### Interactive API Docs
 - **Local Development**: Visit `http://localhost:8000/docs` for Swagger UI documentation
-- **Live API**: Visit [https://weather-ai-assistant-api.onrender.com/docs](https://weather-ai-assistant-api.onrender.com/docs) for the deployed API documentation
+- **Live API**: Visit [https://weather-ai-assistant-zoon.onrender.com/docs](https://weather-ai-assistant-zoon.onrender.com/docs) for the deployed API documentation
 
 ## 🤝 Contributing
 
