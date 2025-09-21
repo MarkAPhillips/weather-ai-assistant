@@ -217,6 +217,7 @@ The application is deployed on [Render](https://render.com/) with automatic CI/C
 #### Environment Variables
 Set these in Render dashboard:
 ```
+ENVIRONMENT=production
 GOOGLE_API_KEY=your_google_api_key
 OPENWEATHER_API_KEY=your_openweather_api_key
 LANGCHAIN_TRACING_V2=true
@@ -241,6 +242,7 @@ The project includes automated CI/CD pipelines:
 
 #### Required GitHub Secrets
 ```
+ENVIRONMENT=production
 GOOGLE_API_KEY=your_google_api_key
 OPENWEATHER_API_KEY=your_openweather_api_key
 LANGCHAIN_API_KEY=your_langchain_api_key
@@ -355,7 +357,7 @@ POST /api/chat/cleanup           # Cleanup expired sessions
 
 ### Interactive API Docs
 - **Local Development**: Visit `http://localhost:8000/docs` for Swagger UI documentation
-- **Live API**: Visit [https://weather-ai-assistant-zoon.onrender.com/docs](https://weather-ai-assistant-zoon.onrender.com/docs) for the deployed API documentation
+- **Production**: API documentation is disabled for security reasons
 
 ## 🤝 Contributing
 

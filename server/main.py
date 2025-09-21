@@ -45,7 +45,12 @@ async def periodic_cleanup():
         except Exception as e:
             print(f"Cleanup error: {e}")
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(
+    lifespan=lifespan,
+    docs_url="/docs" if os.getenv("ENVIRONMENT") != "production" else None,
+    redoc_url="/redoc" if os.getenv("ENVIRONMENT") != "production" else None,
+    openapi_url="/openapi.json" if os.getenv("ENVIRONMENT") != "production" else None
+)
 
 app.add_middleware(
     CORSMiddleware,

@@ -44,6 +44,7 @@ jobs:
         cd server
         python -m pytest test_main.py -v
       env:
+        ENVIRONMENT: development
         GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
         OPENWEATHER_API_KEY: ${{ secrets.OPENWEATHER_API_KEY }}
         
