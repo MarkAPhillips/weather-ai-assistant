@@ -9,9 +9,8 @@ A conversational weather application powered by AI that provides current weather
 - **Air Quality Monitoring**: AQI data with health recommendations
 - **Session Management**: Persistent chat sessions with conversation history
 - **Context-Aware Responses**: AI remembers previous conversations
-- **Typewriter Effect**: Smooth character-by-character response display
 - **Responsive Design**: Works on desktop, tablet, and mobile
-- **Free Hosting**: Deployed on Render with GitHub Actions CI/CD
+- **Live Demo**: Available at [https://weather-ai-assistant-ui.onrender.com/](https://weather-ai-assistant-ui.onrender.com/)
 
 ## 📋 Prerequisites
 
@@ -200,40 +199,22 @@ npm run build --configuration=production
 
 ## 🚀 Deployment
 
-### Free Hosting Options
+### Render Deployment
 
-#### Option 1: Render (Recommended)
-- **Backend**: Web service with Docker
-- **Frontend**: Static site
-- **Cost**: Free tier available
-- **Setup**: Automatic from GitHub
+The application is deployed on [Render](https://render.com/) with automatic CI/CD from GitHub:
 
-#### Option 2: Railway
-- **Backend**: Web service
-- **Frontend**: Static site
-- **Cost**: Free tier available
-- **Setup**: Connect GitHub repository
-
-#### Option 3: Fly.io
-- **Backend**: Web service
-- **Frontend**: Static site
-- **Cost**: Free tier available
-- **Setup**: CLI-based deployment
-
-### Render Deployment (Current Setup)
-
-#### 1. Backend Deployment
+#### Backend Deployment
 - **Service Type**: Web Service
 - **Build Command**: `pip install -r server/requirements.txt`
 - **Start Command**: `uvicorn server.main:app --host 0.0.0.0 --port $PORT`
 - **Health Check**: `/api/health`
 
-#### 2. Frontend Deployment
+#### Frontend Deployment
 - **Service Type**: Static Site
 - **Build Command**: `cd client && npm install && npm run build --configuration=production`
 - **Publish Directory**: `client/dist/client/browser`
 
-#### 3. Environment Variables
+#### Environment Variables
 Set these in Render dashboard:
 ```
 GOOGLE_API_KEY=your_google_api_key
