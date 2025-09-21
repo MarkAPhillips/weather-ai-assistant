@@ -316,11 +316,6 @@ GET  /api/chat/stats             # Session statistics
 POST /api/chat/cleanup           # Cleanup expired sessions
 ```
 
-#### Root Endpoint
-```
-GET /                            # Basic connectivity test
-```
-
 ### Data Models
 
 #### ChatMessage
@@ -359,7 +354,8 @@ GET /                            # Basic connectivity test
 ```
 
 ### Interactive API Docs
-Visit `http://localhost:8000/docs` for Swagger UI documentation.
+- **Local Development**: Visit `http://localhost:8000/docs` for Swagger UI documentation
+- **Live API**: Visit [https://weather-ai-assistant-api.onrender.com/docs](https://weather-ai-assistant-api.onrender.com/docs) for the deployed API documentation
 
 ## 🤝 Contributing
 
