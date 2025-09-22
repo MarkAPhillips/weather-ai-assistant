@@ -316,72 +316,8 @@ class WeatherAgent:
             timeout=30,
         )
         
-        # Create agent with weather tool
-        self.agent = create_react_agent(
-            model=self.model,
-            tools=[self.get_weather_tool],
-            prompt=(
-                "You are a knowledgeable, friendly weather assistant with "
-                "geographical and historical expertise. You MUST use the "
-                "weather tool to get current weather data, 5-day forecasts, "
-                "AND 7-day historical weather trends. ALWAYS call the weather "
-                "tool first before responding to any weather-related question.\n\n"
-                "IMPORTANT: You CAN provide historical weather information! "
-                "The weather tool gives you access to recent weather trends "
-                "and patterns. Use this data to answer questions about past "
-                "weather conditions.\n\n"
-                "STEP 1: ALWAYS call the weather tool with the city name\n"
-                "STEP 2: Use the data from the tool to answer the question\n"
-                "STEP 3: Include historical context when available\n\n"
-                "EXAMPLES:\n"
-                "- User asks 'Did it rain yesterday?' → Call weather tool, check historical data\n"
-                "- User asks 'What's the weather?' → Call weather tool, provide current conditions\n"
-                "- User asks 'Will it rain tomorrow?' → Call weather tool, check forecast\n"
-                "- User asks 'What was the weather like yesterday?' → Call weather tool, check historical data\n"
-                "- User asks about past weather, recent weather, or historical patterns → Call weather tool\n\n"
-                "IMPORTANT: If the user asks about ANY past weather (yesterday, last week, recent weather, etc.), "
-                "you MUST call the weather tool to get the historical data. Do not say you cannot provide "
-                "historical information - you have access to 7 days of weather history!\n\n"
-                "FORMATTING:\n"
-                "- Use conversational dates (Today, Tomorrow, Monday, Tuesday, "
-                "etc.) instead of YYYY-MM-DD\n"
-                "- Round temperatures to whole numbers\n"
-                "- Only mention air quality when specifically asked\n\n"
-                "GEOGRAPHICAL KNOWLEDGE:\n"
-                "- Provide context about the location (city characteristics, "
-                "climate patterns, geographical features)\n"
-                "- Mention relevant regional weather patterns or seasonal "
-                "expectations\n"
-                "- Suggest location-specific advice (e.g., coastal areas and "
-                "wind, mountain areas and temperature changes)\n"
-                "- Reference nearby geographical features that might affect "
-                "weather\n"
-                "- Consider local climate zones and typical weather for the "
-                "region\n\n"
-                "HISTORICAL CONTEXT (YOU HAVE ACCESS TO THIS DATA):\n"
-                "- You CAN tell users about recent weather patterns and trends\n"
-                "- Compare current weather to recent trends and historical data\n"
-                "- Mention if conditions are unusual for the season or location\n"
-                "- Provide context about recent weather patterns (e.g., 'This "
-                "is the 3rd consecutive day of rain')\n"
-                "- Reference seasonal expectations and how current weather "
-                "compares\n"
-                "- Identify trends and patterns in the historical data\n"
-                "- Mention if temperatures are above/below average for the "
-                "period\n"
-                "- Answer questions like 'Did it rain yesterday?' using the "
-                "historical data provided\n\n"
-                "COMMUNICATION STYLE:\n"
-                "- Be helpful, natural, and conversational - not robotic or "
-                "overly formal\n"
-                "- Use contractions and natural language\n"
-                "- Add helpful context and advice when appropriate\n"
-                "- Combine current weather, historical trends, and geographical "
-                "insights for a richer response\n"
-                "- NEVER say you cannot provide historical weather information "
-                "- you have access to 7 days of weather trends!"
-            ),
-        )
+        # Note: We no longer need the LangGraph agent since we're using forced tool usage
+        # The agent is kept for backward compatibility but not used in the new approach
 
     def get_weather_tool(self, city: str, query: str = "") -> str:
         """Weather tool that provides current weather, forecasts, and historical data.
@@ -418,9 +354,9 @@ class WeatherAgent:
         
         # Return weather data with formatted values
         current_weather = f"""Weather for {weather_data['city']}, {weather_data['country']}:
-Temperature: {weather_data['temperature']}°C (feels like {weather_data['feels_like']}°C)
-Condition: {weather_data['condition']}
-Humidity: {weather_data['humidity']}%
+        Temperature: {weather_data['temperature']}°C (feels like {weather_data['feels_like']}°C)
+        Condition: {weather_data['condition']}
+        Humidity: {weather_data['humidity']}%
 Wind: {wind_desc}
 Pressure: {weather_data['pressure']} hPa
 
@@ -503,83 +439,127 @@ Pressure: {weather_data['pressure']} hPa
             air_quality_data = self.air_quality_service.get_air_quality_data(weather_data['city'], weather_data['country'])
             if air_quality_data:
                 aqi_status = "Good" if air_quality_data.aqi <= 50 else "Moderate" if air_quality_data.aqi <= 100 else "Poor"
-                air_quality_text = f"\nAir Quality: {aqi_status} (AQI: {air_quality_data.aqi})"
+                air_quality_text = f"\n=== AIR QUALITY DETAILS ===\n"
+                air_quality_text += f"Overall AQI: {air_quality_data.aqi} ({aqi_status})\n"
+                
+                if air_quality_data.pm25 is not None:
+                    air_quality_text += f"PM2.5: {air_quality_data.pm25:.1f} μg/m³\n"
+                if air_quality_data.pm10 is not None:
+                    air_quality_text += f"PM10: {air_quality_data.pm10:.1f} μg/m³\n"
+                if air_quality_data.o3 is not None:
+                    air_quality_text += f"Ozone (O3): {air_quality_data.o3:.1f} μg/m³\n"
+                if air_quality_data.no2 is not None:
+                    air_quality_text += f"Nitrogen Dioxide (NO2): {air_quality_data.no2:.1f} μg/m³\n"
+                if air_quality_data.so2 is not None:
+                    air_quality_text += f"Sulfur Dioxide (SO2): {air_quality_data.so2:.1f} μg/m³\n"
+                if air_quality_data.co is not None:
+                    air_quality_text += f"Carbon Monoxide (CO): {air_quality_data.co:.1f} mg/m³\n"
+                
+                if air_quality_data.health_recommendations:
+                    air_quality_text += f"\nHealth Recommendations:\n"
+                    for rec in air_quality_data.health_recommendations:
+                        air_quality_text += f"• {rec}\n"
+                
+                air_quality_text += "=== END AIR QUALITY ===\n"
         
         return current_weather + historical_text + forecast_text + air_quality_text
 
     def get_weather_advice(self, query: str, conversation_history: List = None) -> str:
-        """Get weather advice with conversation context."""
+        """Get weather advice with forced tool usage for weather queries."""
         try:
-            # Build context from conversation history
-            context = self._build_conversation_context(conversation_history)
+            # Check if this is a weather-related query
+            weather_keywords = [
+                "weather", "temperature", "rain", "sunny", "cloudy", "forecast", 
+                "air quality", "pollution", "aqi", "yesterday", "tomorrow", "today",
+                "hot", "cold", "wind", "humidity", "pressure", "snow", "storm",
+                "drizzle", "fog", "mist", "clear", "overcast", "partly cloudy"
+            ]
             
-            # Create enhanced prompt with context
-            enhanced_prompt = f"""
-            {context}
+            query_lower = query.lower()
+            is_weather_query = any(keyword in query_lower for keyword in weather_keywords)
             
-            Current user question: {query}
-            
-            You are a professional yet conversational weather assistant. You have access to both current 
-            weather conditions and extended forecasts (up to 5 days). IMPORTANT: You MUST use the 
-            weather_tool_with_query function to get weather data. When users ask about weather, extract 
-            the city name from their query, conversation context, or location context and call the weather 
-            tool. The tool will automatically provide both current conditions and appropriate forecast data 
-            based on the query. Always use the tool to get actual weather data before responding.
-            
-            AIR QUALITY INFORMATION:
-            - Mention air quality briefly when relevant for health (e.g., "The air quality is good today")
-            - Only provide detailed air quality breakdowns when users specifically ask for them
-            - Let users know they can ask for "detailed air quality" or "air quality breakdown" if interested
-            - Don't overwhelm users with technical air quality data unless requested
-            
-            RESPONSE STYLE:
-            - Be professional but approachable - like a knowledgeable friend
-            - Use natural, conversational language instead of technical terms
-            - Vary your greeting style - don't start every response the same way
-            - Use contractions (it's, you'll, won't, etc.) for natural flow
-            - Include relevant advice and suggestions naturally
-            - Be informative and helpful without being overly casual
-            - Avoid repetitive phrases like "Hey there!" or "The current weather is..."
-            - Start responses naturally based on the context
-            - Vary your opening - sometimes start with the weather directly, sometimes with context
-            - Examples of good openings: "It's...", "The weather in...", "Currently in...", "Right now in..."
-            
-            EXAMPLES:
-            Instead of: "The current weather in London, GB is 20°C with overcast clouds and a wind of 5.14 m/s."
-            Say: "It's a bit cloudy in London right now at 20°C, with a gentle breeze. Perfect weather for a walk!"
-            
-            Instead of: "Hey there! So, it looks like it's a gentle breeze in New York right now..."
-            Say: "The wind in New York is quite gentle at 3.13 m/s - nothing too strong, so you won't have to worry about your hair getting messed up!"
-            
-            Instead of: "Temperature: 15°C, Condition: light rain, Humidity: 85%"
-            Say: "It's drizzling in Paris today at 15°C - don't forget your umbrella! The humidity is making it feel a bit muggy."
-            
-            Always provide accurate weather information and safety recommendations. Be conversational 
-            but maintain professionalism. Reference previous conversation context when appropriate.
-            """
-            
-            # Create custom tool with context
-            def weather_tool_with_context(city: str) -> str:
-                """Get weather data and forecast for a specific city based on query context."""
-                return self.get_weather_tool(city, query)
-            
-            # Create agent with enhanced prompt
-            agent = create_react_agent(
-                model=self.model,
-                tools=[weather_tool_with_context],
-                prompt=enhanced_prompt,
-            )
-            
-            result = agent.invoke(
-                {"messages": [{"role": "user", "content": query}]}
-            )
-            
-            return result["messages"][-1].content
+            if is_weather_query:
+                # Extract city from query
+                city = self._extract_city_from_query(query, conversation_history)
+                
+                # Force tool usage - get weather data directly
+                weather_data = self.get_weather_tool(city, query)
+                
+                # Build context from conversation history
+                context = self._build_conversation_context(conversation_history)
+                
+                # Create a simple prompt that focuses on response generation
+                response_prompt = f"""
+                {context}
+                
+                User Query: {query}
+                
+                Weather Data Available:
+                {weather_data}
+                
+                You are a friendly, conversational weather assistant. Based on the weather data above, 
+                provide a helpful and informative response to the user's question. Be natural and 
+                conversational, not robotic. Use the data to answer their question completely.
+                
+                Response Guidelines:
+                - Be conversational and friendly
+                - Use contractions (it's, you'll, won't, etc.)
+                - Provide specific information from the data
+                - Include relevant advice when appropriate
+                - Don't say you cannot provide data - you have it available
+                - Be helpful and informative
+                """
+                
+                # Get response from the model
+                response = self.model.invoke(response_prompt)
+                return response.content
+            else:
+                # For non-weather queries, use a simple response
+                return "I'm a weather assistant. I can help you with weather-related questions like current conditions, forecasts, historical weather, and air quality. What would you like to know about the weather?"
             
         except Exception as e:
-            logger.error(f"Agent error: {str(e)}")
-            return f"Sorry, I encountered an error: {str(e)}"
+            logger.error(f"Error getting weather advice: {str(e)}")
+            return f"I'm sorry, I encountered an error: {str(e)}"
 
+    def _extract_city_from_query(self, query: str, conversation_history: List = None) -> str:
+        """Extract city name from query or conversation history."""
+        import re
+        
+        # Common city patterns
+        city_patterns = [
+            r'\b(?:in|at|for)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*?)(?:\s+(?:weather|yesterday|today|tomorrow|last|week|month|year))',
+            r'\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*?)\s+(?:weather|temperature|rain|sunny|cloudy)',
+            r'weather\s+(?:in|at|for)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*?)(?:\s+(?:yesterday|today|tomorrow|last|week|month|year))',
+            r'([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*?)\s+(?:yesterday|today|tomorrow|last|week|month|year)'
+        ]
+        
+        # Try to extract city from current query
+        for pattern in city_patterns:
+            match = re.search(pattern, query, re.IGNORECASE)
+            if match:
+                city = match.group(1).strip()
+                # Filter out common false positives
+                if city.lower() not in ['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'for', 'with', 'by']:
+                    return city
+        
+        # Check conversation history for city mentions
+        if conversation_history:
+            for message in reversed(conversation_history[-5:]):  # Check last 5 messages
+                if hasattr(message, 'content'):
+                    content = message.content
+                else:
+                    content = str(message)
+                
+                for pattern in city_patterns:
+                    match = re.search(pattern, content, re.IGNORECASE)
+                    if match:
+                        city = match.group(1).strip()
+                        if city.lower() not in ['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'for', 'with', 'by']:
+                            return city
+        
+        # Default city if none found
+        return "London"
+    
     def _build_conversation_context(self, conversation_history: List = None) -> str:
         """Build conversation context for the AI agent."""
         context_parts = []
