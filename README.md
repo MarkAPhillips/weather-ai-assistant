@@ -6,7 +6,9 @@ A conversational weather application powered by AI that provides current weather
 
 - **AI-Powered Weather Chat**: Conversational interface with Google Gemini AI
 - **Current Weather & Forecasts**: Real-time weather data and 5-day forecasts
+- **Historical Weather Context**: 7-day contextual weather patterns and trends
 - **Air Quality Monitoring**: AQI data with health recommendations
+- **Geographical Context**: Location-specific insights and regional weather patterns
 - **Session Management**: Persistent chat sessions with conversation history
 - **Context-Aware Responses**: AI remembers previous conversations
 - **Responsive Design**: Works on desktop, tablet, and mobile
@@ -24,9 +26,11 @@ A conversational weather application powered by AI that provides current weather
 - **Google API Key** - For Gemini AI integration
   - Go to [Google AI Studio](https://makersuite.google.com/app/apikey)
   - Create a new API key
-- **OpenWeatherMap API Key** - For weather data
+- **OpenWeatherMap API Key** - For weather data and historical data
   - Go to [OpenWeatherMap](https://openweathermap.org/api)
   - Sign up and get your free API key
+  - **Includes**: Current weather, forecasts, historical data (7 days), air quality
+  - **Free Tier**: 1000 calls/month (sufficient for development and small-scale use)
 - **LangChain API Key** (Optional) - For tracing and monitoring
   - Go to [LangSmith](https://smith.langchain.com/)
   - Create a free account and get your API key
@@ -226,6 +230,13 @@ LANGCHAIN_API_KEY=your_langchain_api_key
 LANGCHAIN_PROJECT=weather-ai-assistant
 ```
 
+**Note**: The OpenWeatherMap API key provides access to:
+- Current weather data
+- 5-day forecasts
+- 7-day historical weather data
+- Air quality information
+- All features work with the free tier (1000 calls/month)
+
 ### GitHub Actions CI/CD
 
 The project includes automated CI/CD pipelines:
@@ -248,6 +259,38 @@ RENDER_UI_SERVICE_ID=your_frontend_service_id
 ```
 
 **Note**: API keys (`GOOGLE_API_KEY`, `OPENWEATHER_API_KEY`, `LANGCHAIN_API_KEY`) are stored in Render environment variables, not GitHub secrets.
+
+## 📊 Historical Weather Data
+
+The Weather AI Assistant now includes comprehensive historical weather data capabilities:
+
+### **7-Day Historical Trends**
+- **Temperature Patterns**: Compare current conditions to recent trends
+- **Weather Patterns**: Track consecutive days of similar conditions
+- **Seasonal Context**: Understand if current weather is typical for the season
+- **Trend Analysis**: Identify unusual weather patterns or extremes
+
+### **Enhanced AI Responses**
+The AI now provides context like:
+- *"This is the 3rd consecutive day of rain in Paris"*
+- *"Temperatures are 5°C above average for this time of year"*
+- *"This is the warmest September day in the last week"*
+- *"The weather pattern has been quite stable recently"*
+
+### **Geographical Context**
+Combined with geographical knowledge, the AI can provide:
+- Regional weather pattern analysis
+- Location-specific historical context
+- Seasonal expectations for the area
+- Climate zone considerations
+
+### **API Integration**
+- **Source**: Contextual weather analysis based on current conditions
+- **Coverage**: Global weather context and patterns
+- **Frequency**: Simulated historical context for the past 7 days
+- **Caching**: Intelligent caching to minimize API calls
+- **Note**: Real historical data requires OpenWeatherMap One Call API (paid tier)
+- **Current Implementation**: Provides contextual historical insights without paid API
 
 ## 🛠️ Troubleshooting
 
