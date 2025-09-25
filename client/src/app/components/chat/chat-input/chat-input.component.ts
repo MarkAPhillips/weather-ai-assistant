@@ -11,7 +11,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
   imports: [CommonModule, FormsModule, MatButtonModule, MatInputModule, MatFormFieldModule],
   template: `
     <div class="p-4 border-t border-white/10 bg-white/5 backdrop-blur-sm">
-      <div class="flex space-x-2">
+      <div class="flex flex-col lg:flex-row lg:space-x-2 space-y-2 lg:space-y-0">
         <mat-form-field appearance="fill" class="flex-1">
           <mat-label class="text-slate-300">Type your message...</mat-label>
           <input

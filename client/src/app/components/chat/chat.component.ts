@@ -327,8 +327,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
   }
 
   useExamplePrompt(prompt: string): void {
-    // Set the message in the input component and send it
-    this.chatInput.setMessage(prompt);
+    // Send the prompt directly without setting it in the input
     this.sendMessage(prompt);
   }
 }

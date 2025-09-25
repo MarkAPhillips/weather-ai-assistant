@@ -4,9 +4,9 @@
     <div class="w-full h-full bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.15)_1px,transparent_0)] bg-[length:20px_20px]"></div>
   </div>
   
-  <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 lg:py-8">
     <!-- Header -->
-    <div class="backdrop-blur-xl bg-white/10 border border-white/20 rounded-2xl p-8 mb-8 shadow-2xl">
+    <header class="backdrop-blur-xl bg-white/10 border border-white/20 rounded-2xl p-4 lg:p-8 mb-4 lg:mb-8 shadow-2xl">
       <div class="flex items-center justify-between">
         <div>
           <h1 class="text-5xl font-bold text-white mb-3 flex items-center">
@@ -17,16 +17,16 @@
         </div>
         <div class="flex items-center space-x-4">
           <!-- Session Info -->
-          <div *ngIf="currentSession" class="bg-white/10 backdrop-blur-sm rounded-lg px-6 py-3 border border-white/20 min-w-80 max-w-96">
+          <div *ngIf="currentSession" class="bg-white/10 backdrop-blur-sm rounded-lg px-6 py-3 border border-white/20 min-w-80 max-w-96 hidden lg:block">
             <div class="text-sm text-white">
               <span class="text-slate-300">Current session:</span> {{getFirstUserMessage(currentSession)}}
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </header>
 
-    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+    <section class="grid grid-cols-1 lg:grid-cols-4 gap-8">
       <!-- Chat Interface -->
       <div class="lg:col-span-3">
         <div class="backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl h-full flex flex-col shadow-2xl">
@@ -109,7 +109,7 @@
       <!-- Sessions Sidebar -->
       <div class="lg:col-span-1">
         <!-- Session Controls -->
-        <div class="backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-4 mb-4 shadow-2xl">
+        <div class="backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-4 mb-4 shadow-2xl hidden lg:block">
           <div class="flex flex-col gap-3">
             
             <div class="flex items-center justify-between w-full">
@@ -145,7 +145,7 @@
         </div>
         
         <!-- Sessions List -->
-        <div class="backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl shadow-2xl" *ngIf="showSessionList">
+        <div class="backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl shadow-2xl hidden lg:block" *ngIf="showSessionList">
           <app-session-list
             [sessions]="sessions"
             [currentSession]="currentSession"
@@ -156,7 +156,7 @@
           ></app-session-list>
         </div>
       </div>
-    </div>
+    </section>
 
     <!-- Error Display -->
     <div *ngIf="error" class="fixed bottom-6 right-6 backdrop-blur-xl bg-red-500/20 border border-red-400/30 text-red-100 px-6 py-4 rounded-xl shadow-2xl max-w-md z-50">
