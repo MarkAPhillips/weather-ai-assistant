@@ -40,7 +40,38 @@ export class ChatMessageComponent {
   formatTimestamp(timestamp: string): string {
     try {
       const date = new Date(timestamp);
-      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      
+      // Format: "Thurs, Sept 20th, 7.45pm"
+      const dayNames = ['Sun', 'Mon', 'Tues', 'Wed', 'Thurs', 'Fri', 'Sat'];
+      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+                         'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec'];
+      
+      const dayName = dayNames[date.getDay()];
+      const monthName = monthNames[date.getMonth()];
+      const day = date.getDate();
+      
+      // Add ordinal suffix (1st, 2nd, 3rd, 4th, etc.)
+      const getOrdinalSuffix = (day: number): string => {
+        if (day >= 11 && day <= 13) return 'th';
+        switch (day % 10) {
+          case 1: return 'st';
+          case 2: return 'nd';
+          case 3: return 'rd';
+          default: return 'th';
+        }
+      };
+      
+      const dayWithSuffix = day + getOrdinalSuffix(day);
+      
+      // Format time (12-hour format with . instead of :)
+      const hours = date.getHours();
+      const minutes = date.getMinutes();
+      const ampm = hours >= 12 ? 'pm' : 'am';
+      const displayHours = hours % 12 || 12;
+      const displayMinutes = minutes.toString().padStart(2, '0');
+      const timeString = `${displayHours}.${displayMinutes}${ampm}`;
+      
+      return `${dayName}, ${monthName} ${dayWithSuffix}, ${timeString}`;
     } catch {
       return timestamp;
     }

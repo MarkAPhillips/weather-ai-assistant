@@ -18,8 +18,9 @@
         <div class="flex items-center space-x-4">
           <!-- Session Info -->
           <div *ngIf="currentSession" class="bg-white/10 backdrop-blur-sm rounded-lg px-6 py-3 border border-white/20 min-w-80 max-w-96 hidden lg:block">
-            <div class="text-sm text-white">
-              <span class="text-slate-300">Current session:</span> {{getFirstUserMessage(currentSession)}}
+            <div class="text-sm text-white flex items-center">
+              {{getFirstUserMessage(currentSession)}}
+              <mat-icon class="text-slate-300 ml-2 text-base">chat</mat-icon>
             </div>
           </div>
         </div>

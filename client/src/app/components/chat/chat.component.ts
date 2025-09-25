@@ -109,7 +109,6 @@ export class ChatComponent implements OnInit, AfterViewChecked {
         this.currentSession = sessionData;
         this.messages = sessionData.messages;
         this.displayedMessages = [...this.messages];
-        this.showSessionList = false;
         this.focusInput();
       },
       error: (err) => {
@@ -295,7 +294,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
 
   getFirstUserMessage(session: ChatSession): string {
     if (!session.messages || session.messages.length === 0) {
-      return 'Empty session';
+      return 'New Chat';
     }
     
     // Find the first user message
