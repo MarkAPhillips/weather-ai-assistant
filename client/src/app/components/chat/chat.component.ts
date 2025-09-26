@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
+import { v4 as uuidv4 } from 'uuid';
 import { WeatherService } from '../../services/weather.service';
 import { ChatMessage, ChatSession } from './models/chat.models';
 import { ChatMessageComponent } from './chat-message/chat-message.component';
@@ -34,6 +35,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
   loading: boolean = false;
   error: string = '';
   typewriterActive: boolean = false;
+  userId: string = '';
 
   // Session management
   sessions: ChatSession[] = [];
@@ -43,9 +45,21 @@ export class ChatComponent implements OnInit, AfterViewChecked {
   constructor(private weatherService: WeatherService, private cdr: ChangeDetectorRef, private snackBar: MatSnackBar, private ngZone: NgZone) { }
 
   ngOnInit(): void {
+    this.initialiseUserId();
     this.checkHealth();
     this.loadSessions();
     this.displayedMessages = [...this.messages];
+  }
+
+  private initialiseUserId(): void {
+    // Get or create a unique user ID
+    let userId = sessionStorage.getItem('__user_id__');
+    if (!userId) {
+      // Generate a new UUID-based user ID
+      userId = uuidv4();
+      sessionStorage.setItem('__user_id__', userId);
+    }
+    this.userId = userId;
   }
 
   ngAfterViewChecked(): void {
@@ -68,7 +82,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
   }
 
   loadSessions(): void {
-    this.weatherService.getChatSessions().subscribe({
+    this.weatherService.getChatSessions(this.userId).subscribe({
       next: (data) => {
         this.sessions = data.sessions;
         this.error = ''; // Clear any previous errors
@@ -83,7 +97,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
   createNewSession(): void {
     // If there's already a current session, create a new one
     if (this.currentSession) {
-      this.weatherService.createChatSession().subscribe({
+      this.weatherService.createChatSession(this.userId).subscribe({
         next: (session) => {
           this.currentSession = session;
           this.messages = [];
@@ -104,7 +118,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
   }
 
   loadSession(session: ChatSession): void {
-    this.weatherService.getChatSession(session.session_id).subscribe({
+    this.weatherService.getChatSession(session.session_id, this.userId).subscribe({
       next: (sessionData) => {
         this.currentSession = sessionData;
         this.messages = sessionData.messages;
@@ -118,7 +132,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
   }
 
   deleteSession(sessionId: string): void {
-    this.weatherService.deleteChatSession(sessionId).subscribe({
+    this.weatherService.deleteChatSession(sessionId, this.userId).subscribe({
       next: () => {
         if (this.currentSession?.session_id === sessionId) {
           this.currentSession = null;
@@ -144,7 +158,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
       session_id: this.currentSession?.session_id
     };
 
-    this.weatherService.sendChatMessage(request).subscribe({
+    this.weatherService.sendChatMessage(request, this.userId).subscribe({
       next: async (response) => {
         // Add user message
         const userMessage: ChatMessage = {
@@ -244,7 +258,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
 
 
   cleanupSessions(): void {
-    this.weatherService.cleanupExpiredSessions().subscribe({
+    this.weatherService.cleanupExpiredSessions(this.userId).subscribe({
       next: (response) => {
         this.loadSessions();
         this.snackBar.open('Chat sessions cleaned up successfully!', 'Close', {
@@ -267,7 +281,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
   }
 
   clearAllSessions(): void {
-    this.weatherService.deleteAllSessions().subscribe({
+    this.weatherService.deleteAllSessions(this.userId).subscribe({
       next: (response) => {
         this.currentSession = null;
         this.messages = [];

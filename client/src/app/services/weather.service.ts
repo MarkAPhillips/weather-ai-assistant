@@ -15,36 +15,36 @@ export class WeatherService {
   constructor(private http: HttpClient) { }
 
   // Chat endpoints
-  sendChatMessage(request: ChatRequest): Observable<ChatResponse> {
-    return this.http.post<ChatResponse>(`${this.apiUrl}/chat/send`, request);
+  sendChatMessage(request: ChatRequest, userId: string): Observable<ChatResponse> {
+    return this.http.post<ChatResponse>(`${this.apiUrl}/chat/send?user_id=${userId}`, request);
   }
 
-  getChatSessions(): Observable<{sessions: ChatSession[]}> {
-    return this.http.get<{sessions: ChatSession[]}>(`${this.apiUrl}/chat/sessions`);
+  getChatSessions(userId: string): Observable<{sessions: ChatSession[]}> {
+    return this.http.get<{sessions: ChatSession[]}>(`${this.apiUrl}/chat/sessions?user_id=${userId}`);
   }
 
-  getChatSession(sessionId: string): Observable<ChatSession> {
-    return this.http.get<ChatSession>(`${this.apiUrl}/chat/sessions/${sessionId}`);
+  getChatSession(sessionId: string, userId: string): Observable<ChatSession> {
+    return this.http.get<ChatSession>(`${this.apiUrl}/chat/sessions/${sessionId}?user_id=${userId}`);
   }
 
-  deleteChatSession(sessionId: string): Observable<{message: string}> {
-    return this.http.delete<{message: string}>(`${this.apiUrl}/chat/sessions/${sessionId}`);
+  deleteChatSession(sessionId: string, userId: string): Observable<{message: string}> {
+    return this.http.delete<{message: string}>(`${this.apiUrl}/chat/sessions/${sessionId}?user_id=${userId}`);
   }
 
-  createChatSession(): Observable<ChatSession> {
-    return this.http.post<ChatSession>(`${this.apiUrl}/chat/sessions`, null);
+  createChatSession(userId: string): Observable<ChatSession> {
+    return this.http.post<ChatSession>(`${this.apiUrl}/chat/sessions?user_id=${userId}`, null);
   }
 
   getChatStats(): Observable<SessionStats> {
     return this.http.get<SessionStats>(`${this.apiUrl}/chat/stats`);
   }
 
-  cleanupExpiredSessions(): Observable<{message: string}> {
-    return this.http.post<{message: string}>(`${this.apiUrl}/chat/cleanup`, {});
+  cleanupExpiredSessions(userId: string): Observable<{message: string}> {
+    return this.http.post<{message: string}>(`${this.apiUrl}/chat/cleanup?user_id=${userId}`, {});
   }
 
-  deleteAllSessions(): Observable<{message: string}> {
-    return this.http.delete<{message: string}>(`${this.apiUrl}/chat/sessions`);
+  deleteAllSessions(userId: string): Observable<{message: string}> {
+    return this.http.delete<{message: string}>(`${this.apiUrl}/chat/sessions?user_id=${userId}`);
   }
 
   // Health check
