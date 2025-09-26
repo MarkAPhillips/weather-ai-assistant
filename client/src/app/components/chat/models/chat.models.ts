@@ -3,6 +3,15 @@ export interface ChatMessage {
   content: string;
   timestamp: string;
   message_id: string;
+  image?: WeatherImage;
+}
+
+export interface WeatherImage {
+  url: string;
+  alt: string;
+  photographer: string;
+  photographer_url: string;
+  query: string;
 }
 
 export interface ChatSession {

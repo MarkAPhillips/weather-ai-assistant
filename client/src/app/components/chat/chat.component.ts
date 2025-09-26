@@ -5,7 +5,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { v4 as uuidv4 } from 'uuid';
 import { WeatherService } from '../../services/weather.service';
-import { ChatMessage, ChatSession } from './models/chat.models';
+import { ChatMessage, ChatSession, WeatherImage } from './models/chat.models';
 import { ChatMessageComponent } from './chat-message/chat-message.component';
 import { ChatInputComponent } from './chat-input/chat-input.component';
 import { SessionListComponent } from './session-list/session-list.component';
@@ -169,12 +169,16 @@ export class ChatComponent implements OnInit, AfterViewChecked {
         };
         this.messages.push(userMessage);
 
+        // Parse image data from AI response
+        const { cleanContent, imageData } = this.parseImageFromResponse(response.response);
+        
         // Add AI response
         const aiMessage: ChatMessage = {
           role: 'assistant',
-          content: response.response,
+          content: cleanContent,
           timestamp: response.timestamp,
-          message_id: response.message_id
+          message_id: response.message_id,
+          image: imageData
         };
         this.messages.push(aiMessage);
 
@@ -342,5 +346,51 @@ export class ChatComponent implements OnInit, AfterViewChecked {
   useExamplePrompt(prompt: string): void {
     // Send the prompt directly without setting it in the input
     this.sendMessage(prompt);
+  }
+
+  private parseImageFromResponse(content: string): { cleanContent: string, imageData?: WeatherImage } {
+    // Look for weather image section in the response
+    const imageSectionRegex = /=== WEATHER IMAGE ===\n(.*?)\n=== END IMAGE ===/s;
+    const match = content.match(imageSectionRegex);
+    
+    if (!match) {
+      return { cleanContent: content };
+    }
+    
+    const imageSection = match[1];
+    const lines = imageSection.split('\n');
+    
+    let imageData: WeatherImage | undefined;
+    
+    // Parse image data from the section
+    for (const line of lines) {
+      if (line.startsWith('Image URL: ')) {
+        const url = line.replace('Image URL: ', '');
+        if (!imageData) imageData = {} as WeatherImage;
+        imageData.url = url;
+      } else if (line.startsWith('Description: ')) {
+        const alt = line.replace('Description: ', '');
+        if (!imageData) imageData = {} as WeatherImage;
+        imageData.alt = alt;
+      } else if (line.startsWith('Photographer: ')) {
+        const photographer = line.replace('Photographer: ', '');
+        if (!imageData) imageData = {} as WeatherImage;
+        imageData.photographer = photographer;
+      } else if (line.startsWith('Search Query: ')) {
+        const query = line.replace('Search Query: ', '');
+        if (!imageData) imageData = {} as WeatherImage;
+        imageData.query = query;
+      }
+    }
+    
+    // Add photographer URL (Pexels standard)
+    if (imageData) {
+      imageData.photographer_url = 'https://www.pexels.com';
+    }
+    
+    // Remove the image section from the content
+    const cleanContent = content.replace(imageSectionRegex, '').trim();
+    
+    return { cleanContent, imageData };
   }
 }

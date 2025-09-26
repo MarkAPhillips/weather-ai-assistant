@@ -5,6 +5,7 @@ import logging
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langgraph.prebuilt import create_react_agent
 from air_quality_service import AirQualityService
+from pexels_service import PexelsService
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -307,6 +308,7 @@ class WeatherAgent:
     def __init__(self, google_api_key: str, weather_api_key: str):
         self.weather_service = WeatherService(weather_api_key)
         self.air_quality_service = AirQualityService(weather_api_key)
+        self.pexels_service = PexelsService()
         
         # Initialise Gemini model
         self.model = ChatGoogleGenerativeAI(
@@ -542,7 +544,59 @@ Pressure: {weather_data['pressure']} hPa
                 
                 air_quality_text += "=== END AIR QUALITY ===\n"
         
-        return current_weather + historical_text + forecast_text + air_quality_text
+        # Get weather image only for certain conditions or when specifically requested
+        image_data = None
+        query_lower = query.lower()
+        
+        # Only show images for:
+        # 1. When user specifically asks for visual content
+        # 2. For dramatic weather conditions that benefit from visual context
+        # 3. For general weather overviews (not specific data requests)
+        wants_visual_content = any(keyword in query_lower for keyword in [
+            'show', 'see', 'look', 'picture', 'photo', 'image', 'visual', 'view'
+        ])
+        
+        # Check if query is asking for specific data (temperature, humidity, etc.)
+        is_specific_data_request = any(keyword in query_lower for keyword in [
+            'temperature', 'temp', 'humidity', 'wind', 'pressure', 'degrees', 'celsius', 'fahrenheit'
+        ])
+        
+        # Check if it's a general weather inquiry
+        is_general_weather_inquiry = any(keyword in query_lower for keyword in [
+            'weather', 'forecast', 'condition', 'like', 'how is', 'what is'
+        ])
+        
+        current_condition = weather_data['condition'].lower()
+        
+        # Show images for:
+        # 1. User explicitly wants visual content
+        # 2. General weather inquiries (not specific data requests)
+        # 3. Dramatic weather conditions
+        should_show_image = (
+            wants_visual_content or
+            (is_general_weather_inquiry and not is_specific_data_request) or
+            any(dramatic in current_condition for dramatic in [
+                'storm', 'thunderstorm', 'lightning', 'heavy rain', 'snow', 'blizzard'
+            ])
+        )
+        
+        if should_show_image:
+            image_data = self.pexels_service.get_weather_image(
+                weather_data['condition'], 
+                weather_data['city']
+            )
+        
+        # Add image data to the response
+        image_text = ""
+        if image_data:
+            image_text = f"\n=== WEATHER IMAGE ===\n"
+            image_text += f"Image URL: {image_data['url']}\n"
+            image_text += f"Description: {image_data['alt']}\n"
+            image_text += f"Photographer: {image_data['photographer']}\n"
+            image_text += f"Search Query: {image_data['query']}\n"
+            image_text += "=== END IMAGE ===\n"
+        
+        return current_weather + historical_text + forecast_text + air_quality_text + image_text
 
     def get_weather_advice(self, query: str, conversation_history: List = None) -> str:
         """Get weather advice with conversation context."""
@@ -550,72 +604,56 @@ Pressure: {weather_data['pressure']} hPa
             # Build context from conversation history
             context = self._build_conversation_context(conversation_history)
             
-            # Create enhanced prompt with context
-            enhanced_prompt = f"""
-            {context}
+            # Extract city from query
+            city = self._extract_city_from_query(query, context)
+            logger.info(f"Extracted city: '{city}' from query: '{query}'")
+            if not city:
+                return "I'd be happy to help with weather information! Could you please specify which city you'd like to know about?"
             
-            Current user question: {query}
-            
-            You are a professional yet conversational weather assistant. You have access to both current 
-            weather conditions and extended forecasts (up to 5 days). IMPORTANT: You MUST use the 
-            weather_tool_with_query function to get weather data. When users ask about weather, extract 
-            the city name from their query, conversation context, or location context and call the weather 
-            tool. The tool will automatically provide both current conditions and appropriate forecast data 
-            based on the query. Always use the tool to get actual weather data before responding.
-            
-            AIR QUALITY INFORMATION:
-            - Mention air quality briefly when relevant for health (e.g., "The air quality is good today")
-            - Only provide detailed air quality breakdowns when users specifically ask for them
-            - Let users know they can ask for "detailed air quality" or "air quality breakdown" if interested
-            - Don't overwhelm users with technical air quality data unless requested
-            
-            RESPONSE STYLE:
-            - Be professional but approachable - like a knowledgeable friend
-            - Use natural, conversational language instead of technical terms
-            - Vary your greeting style - don't start every response the same way
-            - Use contractions (it's, you'll, won't, etc.) for natural flow
-            - Include relevant advice and suggestions naturally
-            - Be informative and helpful without being overly casual
-            - Avoid repetitive phrases like "Hey there!" or "The current weather is..."
-            - Start responses naturally based on the context
-            - Vary your opening - sometimes start with the weather directly, sometimes with context
-            - Examples of good openings: "It's...", "The weather in...", "Currently in...", "Right now in..."
-            
-            EXAMPLES:
-            Instead of: "The current weather in London, GB is 20°C with overcast clouds and a wind of 5.14 m/s."
-            Say: "It's a bit cloudy in London right now at 20°C, with a gentle breeze. Perfect weather for a walk!"
-            
-            Instead of: "Hey there! So, it looks like it's a gentle breeze in New York right now..."
-            Say: "The wind in New York is quite gentle at 3.13 m/s - nothing too strong, so you won't have to worry about your hair getting messed up!"
-            
-            Instead of: "Temperature: 15°C, Condition: light rain, Humidity: 85%"
-            Say: "It's drizzling in Paris today at 15°C - don't forget your umbrella! The humidity is making it feel a bit muggy."
-            
-            Always provide accurate weather information and safety recommendations. Be conversational 
-            but maintain professionalism. Reference previous conversation context when appropriate.
-            """
-            
-            # Create custom tool with context
-            def weather_tool_with_context(city: str) -> str:
-                """Get weather data and forecast for a specific city based on query context."""
-                return self.get_weather_tool(city, query)
-            
-            # Create agent with enhanced prompt
-            agent = create_react_agent(
-                model=self.model,
-                tools=[weather_tool_with_context],
-                prompt=enhanced_prompt,
-            )
-            
-            result = agent.invoke(
-                {"messages": [{"role": "user", "content": query}]}
-            )
-            
-            return result["messages"][-1].content
+            # Get raw weather data with image
+            try:
+                raw_weather_data = self.get_weather_tool(city, query)
+                
+                # Create conversational summary using the model
+                conversational_prompt = f"""
+                You are a friendly, knowledgeable weather assistant. Based on this weather data for {city}, provide a conversational response to the user's question: "{query}"
+                
+                Weather data:
+                {raw_weather_data}
+                
+                Guidelines for your response:
+                - Start with a varied, natural greeting (avoid always saying "Hey there" - use different openings like "Good to hear from you!", "Happy to help!", "Let me check that for you!", "Here's what I found!", "Great question!", etc.)
+                - Be conversational and helpful, but don't repeat raw technical data
+                - Focus on what's most relevant to the user's specific question
+                - Use a warm, professional tone
+                - Vary your language and sentence structure
+                - If it's a specific question (like "Should I bring an umbrella?"), give a direct, practical answer
+                - If it's a general weather inquiry, provide a nice overview with key details
+                
+                Make your response feel natural and engaging, as if you're a knowledgeable friend helping with weather information.
+                """
+                
+                # Get conversational response from the model
+                response = self.model.invoke(conversational_prompt)
+                conversational_response = response.content.strip()
+                
+                # Extract image data from raw weather data
+                image_data = self._extract_image_data(raw_weather_data)
+                
+                # Return only conversational response with image data
+                if image_data:
+                    return f"{conversational_response}\n\n{image_data}"
+                else:
+                    return conversational_response
+                
+            except Exception as e:
+                logger.error(f"Weather data fetch error for {city}: {str(e)}")
+                # Return a friendly error message without technical details
+                return f"I'm sorry, I'm having trouble getting the weather information for {city} right now. Please try again in a few moments, or check with another weather source."
             
         except Exception as e:
             logger.error(f"Agent error: {str(e)}")
-            return f"Sorry, I encountered an error: {str(e)}"
+            return "I'm sorry, I'm having some technical difficulties right now. Please try asking your question again in a moment."
 
     def _build_conversation_context(self, conversation_history: List = None) -> str:
         """Build conversation context for the AI agent."""
@@ -628,3 +666,229 @@ Pressure: {weather_data['pressure']} hPa
                 context_parts.append(f"{message.role}: {message.content}")
         
         return "\n".join(context_parts) if context_parts else "No previous context available."
+
+    def _extract_city_from_query(self, query: str, context: str = "") -> str:
+        """Extract city name from query or context."""
+        import re
+        
+        # Common city patterns - more specific to avoid temporal words
+        city_patterns = [
+            r'in\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)(?:\s|$)',
+            r'for\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)(?:\s|$)',
+            r'([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\s+weather',
+            r'weather\s+in\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)(?:\s|$)',
+        ]
+        
+        # Direct city name matching (case insensitive) - check this first
+        query_lower = query.lower()
+        
+        # Handle common temporal phrases and extract city names
+        if 'tokyo' in query_lower:
+            return 'Tokyo'
+        elif 'london' in query_lower:
+            return 'London'
+        elif any(word in query_lower for word in ['new york', 'nyc', 'newyork']):
+            return 'New York'
+        elif 'paris' in query_lower:
+            return 'Paris'
+        elif 'berlin' in query_lower:
+            return 'Berlin'
+        elif 'madrid' in query_lower:
+            return 'Madrid'
+        elif 'rome' in query_lower:
+            return 'Rome'
+        elif 'sydney' in query_lower:
+            return 'Sydney'
+        elif 'melbourne' in query_lower:
+            return 'Melbourne'
+        elif 'toronto' in query_lower:
+            return 'Toronto'
+        elif 'vancouver' in query_lower:
+            return 'Vancouver'
+        elif 'mumbai' in query_lower:
+            return 'Mumbai'
+        elif 'delhi' in query_lower:
+            return 'Delhi'
+        elif 'beijing' in query_lower:
+            return 'Beijing'
+        elif 'shanghai' in query_lower:
+            return 'Shanghai'
+        elif 'singapore' in query_lower:
+            return 'Singapore'
+        elif 'seoul' in query_lower:
+            return 'Seoul'
+        elif 'bangkok' in query_lower:
+            return 'Bangkok'
+        elif 'dubai' in query_lower:
+            return 'Dubai'
+        elif 'istanbul' in query_lower:
+            return 'Istanbul'
+        elif 'moscow' in query_lower:
+            return 'Moscow'
+        elif 'cairo' in query_lower:
+            return 'Cairo'
+        elif 'johannesburg' in query_lower:
+            return 'Johannesburg'
+        elif 'lagos' in query_lower:
+            return 'Lagos'
+        elif 'nairobi' in query_lower:
+            return 'Nairobi'
+        elif 'rio de janeiro' in query_lower:
+            return 'Rio de Janeiro'
+        elif 'sao paulo' in query_lower:
+            return 'Sao Paulo'
+        elif 'buenos aires' in query_lower:
+            return 'Buenos Aires'
+        elif 'mexico city' in query_lower:
+            return 'Mexico City'
+        elif 'los angeles' in query_lower:
+            return 'Los Angeles'
+        elif 'chicago' in query_lower:
+            return 'Chicago'
+        elif 'houston' in query_lower:
+            return 'Houston'
+        elif 'phoenix' in query_lower:
+            return 'Phoenix'
+        elif 'philadelphia' in query_lower:
+            return 'Philadelphia'
+        elif 'san antonio' in query_lower:
+            return 'San Antonio'
+        elif 'san diego' in query_lower:
+            return 'San Diego'
+        elif 'dallas' in query_lower:
+            return 'Dallas'
+        elif 'san jose' in query_lower:
+            return 'San Jose'
+        elif 'austin' in query_lower:
+            return 'Austin'
+        elif 'jacksonville' in query_lower:
+            return 'Jacksonville'
+        elif 'fort worth' in query_lower:
+            return 'Fort Worth'
+        elif 'columbus' in query_lower:
+            return 'Columbus'
+        elif 'charlotte' in query_lower:
+            return 'Charlotte'
+        elif 'san francisco' in query_lower:
+            return 'San Francisco'
+        elif 'indianapolis' in query_lower:
+            return 'Indianapolis'
+        elif 'seattle' in query_lower:
+            return 'Seattle'
+        elif 'denver' in query_lower:
+            return 'Denver'
+        elif 'washington' in query_lower:
+            return 'Washington'
+        elif 'boston' in query_lower:
+            return 'Boston'
+        elif 'el paso' in query_lower:
+            return 'El Paso'
+        elif 'nashville' in query_lower:
+            return 'Nashville'
+        elif 'detroit' in query_lower:
+            return 'Detroit'
+        elif 'oklahoma city' in query_lower:
+            return 'Oklahoma City'
+        elif 'portland' in query_lower:
+            return 'Portland'
+        elif 'las vegas' in query_lower:
+            return 'Las Vegas'
+        elif 'memphis' in query_lower:
+            return 'Memphis'
+        elif 'louisville' in query_lower:
+            return 'Louisville'
+        elif 'baltimore' in query_lower:
+            return 'Baltimore'
+        elif 'milwaukee' in query_lower:
+            return 'Milwaukee'
+        elif 'albuquerque' in query_lower:
+            return 'Albuquerque'
+        elif 'tucson' in query_lower:
+            return 'Tucson'
+        elif 'fresno' in query_lower:
+            return 'Fresno'
+        elif 'sacramento' in query_lower:
+            return 'Sacramento'
+        elif 'mesa' in query_lower:
+            return 'Mesa'
+        elif 'kansas city' in query_lower:
+            return 'Kansas City'
+        elif 'atlanta' in query_lower:
+            return 'Atlanta'
+        elif 'long beach' in query_lower:
+            return 'Long Beach'
+        elif 'colorado springs' in query_lower:
+            return 'Colorado Springs'
+        elif 'raleigh' in query_lower:
+            return 'Raleigh'
+        elif 'miami' in query_lower:
+            return 'Miami'
+        elif 'virginia beach' in query_lower:
+            return 'Virginia Beach'
+        elif 'omaha' in query_lower:
+            return 'Omaha'
+        elif 'oakland' in query_lower:
+            return 'Oakland'
+        elif 'minneapolis' in query_lower:
+            return 'Minneapolis'
+        elif 'tulsa' in query_lower:
+            return 'Tulsa'
+        elif 'arlington' in query_lower:
+            return 'Arlington'
+        elif 'tampa' in query_lower:
+            return 'Tampa'
+        elif 'new orleans' in query_lower:
+            return 'New Orleans'
+        elif 'bishops stortford' in query_lower:
+            return 'Bishops Stortford'
+        
+        # If no hardcoded match, try regex patterns for multi-word cities
+        # Search in query first
+        for pattern in city_patterns:
+            match = re.search(pattern, query, re.IGNORECASE)
+            if match:
+                city = match.group(1).strip()
+                # Filter out common false positives and temporal words
+                if city.lower() not in ['the', 'what', 'how', 'when', 'where', 'why', 'tomorrow', 'today', 'yesterday', 'next', 'last']:
+                    return city
+
+        # Search in context
+        for pattern in city_patterns:
+            match = re.search(pattern, context, re.IGNORECASE)
+            if match:
+                city = match.group(1).strip()
+                if city.lower() not in ['the', 'what', 'how', 'when', 'where', 'why', 'tomorrow', 'today', 'yesterday', 'next', 'last']:
+                    return city
+
+        # Try to extract any capitalized words that might be city names
+        # Look for patterns like "in [City Name]" or "[City Name] weather"
+        words = query.split()
+        for i, word in enumerate(words):
+            if word.lower() in ['in', 'for', 'at'] and i + 1 < len(words):
+                # Check if next word(s) are capitalized (potential city name)
+                potential_city_parts = []
+                j = i + 1
+                while j < len(words) and words[j][0].isupper():
+                    potential_city_parts.append(words[j])
+                    j += 1
+                
+                if potential_city_parts:
+                    potential_city = ' '.join(potential_city_parts)
+                    # Filter out common false positives
+                    if potential_city.lower() not in ['the', 'what', 'how', 'when', 'where', 'why', 'tomorrow', 'today', 'yesterday', 'next', 'last']:
+                        return potential_city
+        
+        return None
+
+    def _extract_image_data(self, raw_weather_data: str) -> str:
+        """Extract only the image section from raw weather data."""
+        import re
+        
+        # Look for weather image section
+        image_section_regex = r'=== WEATHER IMAGE ===\n(.*?)\n=== END IMAGE ==='
+        match = re.search(image_section_regex, raw_weather_data, re.DOTALL)
+        
+        if match:
+            return f"=== WEATHER IMAGE ===\n{match.group(1)}\n=== END IMAGE ==="
+        
+        return ""

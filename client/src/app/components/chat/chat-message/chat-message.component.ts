@@ -16,6 +16,7 @@ export class ChatMessageComponent {
   @Input() isLastMessage: boolean = false;
   @Output() skipTypewriter = new EventEmitter<void>();
 
+
   get canSkipTypewriter(): boolean {
     return this.message.role === 'assistant' && 
            this.typewriterActive && 
@@ -71,7 +72,7 @@ export class ChatMessageComponent {
       const displayMinutes = minutes.toString().padStart(2, '0');
       const timeString = `${displayHours}.${displayMinutes}${ampm}`;
       
-      return `${dayName}, ${monthName} ${dayWithSuffix}, ${timeString}`;
+      return `${dayName}, ${monthName} ${dayWithSuffix} ${timeString}`;
     } catch {
       return timestamp;
     }

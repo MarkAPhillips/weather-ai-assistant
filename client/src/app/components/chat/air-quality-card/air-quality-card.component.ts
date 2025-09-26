@@ -133,7 +133,7 @@ export class AirQualityCardComponent {
   formatTimestamp(timestamp: string): string {
     try {
       const date = new Date(timestamp);
-      return date.toLocaleString('en-US', {
+      return date.toLocaleString('en-GB', {
         month: 'short',
         day: 'numeric',
         hour: '2-digit',

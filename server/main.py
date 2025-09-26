@@ -1,6 +1,5 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from typing import Optional
 import os
 import asyncio
 from datetime import datetime, timezone
@@ -33,13 +32,19 @@ async def lifespan(app: FastAPI):
 
 
 async def periodic_cleanup():
-    """Periodically clean up expired sessions."""
+    """Periodically clean up expired sessions for all users."""
     while True:
         try:
             await asyncio.sleep(3600)  # Run every hour
-            cleaned_count = session_manager.cleanup_expired_sessions()
-            if cleaned_count > 0:
-                print(f"Cleaned up {cleaned_count} expired sessions")
+            # Clean up sessions for all users
+            total_cleaned = 0
+            for user_id in list(session_manager.user_sessions.keys()):
+                cleaned_count = session_manager.cleanup_expired_sessions(
+                    user_id)
+                total_cleaned += cleaned_count
+            if total_cleaned > 0:
+                print(f"Cleaned up {total_cleaned} expired sessions "
+                      f"across all users")
         except asyncio.CancelledError:
             break
         except Exception as e:
@@ -49,7 +54,8 @@ app = FastAPI(
     lifespan=lifespan,
     docs_url="/docs" if os.getenv("ENVIRONMENT") != "production" else None,
     redoc_url="/redoc" if os.getenv("ENVIRONMENT") != "production" else None,
-    openapi_url="/openapi.json" if os.getenv("ENVIRONMENT") != "production" else None
+    openapi_url=("/openapi.json" if os.getenv("ENVIRONMENT") !=
+                 "production" else None)
 )
 
 app.add_middleware(
@@ -68,27 +74,31 @@ weather_agent = WeatherAgent(
 
 # Chat endpoints
 @app.post("/api/chat/send", response_model=ChatResponse)
-async def send_chat_message(request: ChatRequest):
+async def send_chat_message(request: ChatRequest, user_id: str):
     """Send a message and get AI response."""
     try:
         # Get or create session
         if request.session_id:
-            session = session_manager.get_session(request.session_id)
+            session = session_manager.get_session(
+                request.session_id, user_id)
             if not session:
-                raise HTTPException(status_code=404, detail="Session not found")
+                raise HTTPException(
+                    status_code=404, detail="Session not found")
         else:
-            session = session_manager.create_session()
+            session = session_manager.create_session(user_id)
 
         # Add user message to session
         user_message = session_manager.add_message(
-            session.session_id, "user", request.message
+            session.session_id, "user", request.message, user_id
         )
 
         if not user_message:
-            raise HTTPException(status_code=500, detail="Failed to add message")
+            raise HTTPException(
+                status_code=500, detail="Failed to add message")
 
         # Get conversation history
-        conversation_history = session_manager.get_conversation_history(session.session_id)
+        conversation_history = session_manager.get_conversation_history(
+            session.session_id, user_id)
 
         # Get AI response with context
         ai_response = weather_agent.get_weather_advice(
@@ -98,8 +108,7 @@ async def send_chat_message(request: ChatRequest):
 
         # Add AI response to session
         ai_message = session_manager.add_message(
-            session.session_id, "assistant", ai_response
-        )
+            session.session_id, "assistant", ai_response, user_id)
 
         return ChatResponse(
             response=ai_response,
@@ -115,20 +124,20 @@ async def send_chat_message(request: ChatRequest):
 
 
 @app.get("/api/chat/sessions")
-async def list_sessions():
-    """List all active chat sessions."""
+async def list_sessions(user_id: str):
+    """List all active chat sessions for a specific user."""
     try:
-        sessions = session_manager.list_sessions()
+        sessions = session_manager.list_sessions(user_id)
         return {"sessions": sessions}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/api/chat/sessions/{session_id}")
-async def get_session(session_id: str):
-    """Get a specific chat session."""
+async def get_session(session_id: str, user_id: str):
+    """Get a specific chat session for a specific user."""
     try:
-        session = session_manager.get_session(session_id)
+        session = session_manager.get_session(session_id, user_id)
         if not session:
             raise HTTPException(status_code=404, detail="Session not found")
         return session
@@ -139,10 +148,10 @@ async def get_session(session_id: str):
 
 
 @app.delete("/api/chat/sessions/{session_id}")
-async def delete_session(session_id: str):
-    """Delete a chat session."""
+async def delete_session(session_id: str, user_id: str):
+    """Delete a chat session for a specific user."""
     try:
-        success = session_manager.delete_session(session_id)
+        success = session_manager.delete_session(session_id, user_id)
         if not success:
             raise HTTPException(status_code=404, detail="Session not found")
         return {"message": "Session deleted successfully"}
@@ -153,40 +162,40 @@ async def delete_session(session_id: str):
 
 
 @app.post("/api/chat/sessions")
-async def create_session():
-    """Create a new chat session."""
+async def create_session(user_id: str):
+    """Create a new chat session for a specific user."""
     try:
-        session = session_manager.create_session()
+        session = session_manager.create_session(user_id)
         return session
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.delete("/api/chat/sessions")
-async def delete_all_sessions():
-    """Delete all chat sessions."""
+async def delete_all_sessions(user_id: str):
+    """Delete all chat sessions for a specific user."""
     try:
-        deleted_count = session_manager.delete_all_sessions()
+        deleted_count = session_manager.delete_all_sessions(user_id)
         return {"message": f"Deleted {deleted_count} sessions"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/api/chat/stats")
-async def get_chat_stats():
-    """Get chat session statistics."""
+async def get_chat_stats(user_id: str):
+    """Get chat session statistics for a specific user."""
     try:
-        stats = session_manager.get_session_stats()
+        stats = session_manager.get_session_stats(user_id)
         return stats
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/api/chat/cleanup")
-async def cleanup_expired_sessions():
-    """Clean up expired sessions."""
+async def cleanup_expired_sessions(user_id: str):
+    """Clean up expired sessions for a specific user."""
     try:
-        cleaned_count = session_manager.cleanup_expired_sessions()
+        cleaned_count = session_manager.cleanup_expired_sessions(user_id)
         return {"message": f"Cleaned up {cleaned_count} expired sessions"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
