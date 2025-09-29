@@ -2,7 +2,7 @@ import requests
 from typing import Dict, List, Optional
 from datetime import datetime, timezone
 import logging
-from models import AirQualityData
+from models.air_quality import AirQualityData
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -16,7 +16,7 @@ class AirQualityService:
         self.api_key = api_key
         self.base_url = "http://api.openweathermap.org/data/2.5/air_pollution"
         self.cache = {}
-        self.cache_duration = 600  # 10 minutes (air quality changes slower than weather)
+        self.cache_duration = 600  # 10 minutes (air quality changes slower)
 
     def _is_cache_valid(self, city_key: str) -> bool:
         """Check if cached air quality data is still valid."""
@@ -24,13 +24,14 @@ class AirQualityService:
             return False
 
         cache_time = self.cache[city_key]["timestamp"]
-        return (datetime.now(timezone.utc) - cache_time).seconds < self.cache_duration
+        return (datetime.now(timezone.utc) - cache_time).seconds < \
+            self.cache_duration
 
     def _get_aqi_from_pollutants(self, pollutants: Dict[str, float]) -> int:
         """Calculate AQI from pollutant concentrations (US EPA standard)."""
         # Use PM2.5 as primary indicator for AQI calculation
         pm25 = pollutants.get('pm25', 0)
-        
+
         if pm25 <= 12.0:
             return int((pm25 / 12.0) * 50)
         elif pm25 <= 35.4:
@@ -58,17 +59,18 @@ class AirQualityService:
         elif aqi <= 100:
             return [
                 "Air quality is moderate - acceptable for most people",
-                "Sensitive individuals may experience minor breathing discomfort"
+                "Sensitive individuals may experience minor breathing issues"
             ]
         elif aqi <= 150:
             return [
                 "Air quality is unhealthy for sensitive groups",
-                "Children, elderly, and people with heart/lung disease should limit outdoor activities",
-                "Consider wearing a mask if you're sensitive to air pollution"
+                "Children, elderly, and people with heart/lung disease "
+                "should limit outdoor activities",
+                "Consider wearing a mask if you're sensitive to pollution"
             ]
         elif aqi <= 200:
             return [
-                "Air quality is unhealthy - everyone may experience health effects",
+                "Air quality is unhealthy - everyone may experience effects",
                 "Sensitive groups should avoid outdoor activities",
                 "General population should limit prolonged outdoor exertion"
             ]
@@ -86,10 +88,11 @@ class AirQualityService:
                 "Consider using air purifiers indoors"
             ]
 
-    def get_air_quality_data(self, city: str, country: str = None) -> Optional[AirQualityData]:
-        """Get air quality data for a city using coordinates from weather data."""
+    def get_air_quality_data(self, city: str,
+                             country: str = None) -> Optional[AirQualityData]:
+        """Get air quality data for a city using coordinates."""
         cache_key = f"{city}_{country}" if country else city
-        
+
         # Check cache first
         if self._is_cache_valid(cache_key):
             logger.info(f"Using cached air quality data for {cache_key}")
@@ -103,18 +106,20 @@ class AirQualityService:
                 "limit": 1,
                 "appid": self.api_key
             }
-            
-            geocoding_response = requests.get(geocoding_url, params=geocoding_params, timeout=10)
+
+            geocoding_response = requests.get(
+                geocoding_url, params=geocoding_params, timeout=10
+            )
             geocoding_response.raise_for_status()
-            
+
             geocoding_data = geocoding_response.json()
             if not geocoding_data:
                 logger.warning(f"No coordinates found for {city}")
                 return None
-                
+
             lat = geocoding_data[0]["lat"]
             lon = geocoding_data[0]["lon"]
-            
+
             # Now get air pollution data using coordinates
             params = {
                 "lat": lat,
@@ -126,14 +131,14 @@ class AirQualityService:
             response.raise_for_status()
 
             data = response.json()
-            
+
             if not data.get("list") or len(data["list"]) == 0:
                 logger.warning(f"No air quality data found for {city}")
                 return None
 
             # Extract air pollution data
             pollution_data = data["list"][0]["components"]
-            
+
             # Extract pollutants
             pm25 = pollution_data.get("pm2_5")
             pm10 = pollution_data.get("pm10")
@@ -151,7 +156,7 @@ class AirQualityService:
                 'so2': so2,
                 'co': co
             }
-            
+
             aqi = self._get_aqi_from_pollutants(pollutants_dict)
 
             # Get health recommendations
@@ -183,7 +188,9 @@ class AirQualityService:
             logger.error(f"Error fetching air quality data for {city}: {e}")
             return None
         except Exception as e:
-            logger.error(f"Unexpected error fetching air quality data for {city}: {e}")
+            logger.error(
+                f"Unexpected error fetching air quality data for {city}: {e}"
+            )
             return None
 
     def get_air_quality_summary(self, air_quality: AirQualityData) -> str:
@@ -192,7 +199,7 @@ class AirQualityService:
             return "Air quality data not available"
 
         aqi = air_quality.aqi
-        
+
         if aqi <= 50:
             status = "Good"
             color = "🟢"
@@ -213,10 +220,10 @@ class AirQualityService:
             color = "🟤"
 
         summary = f"{color} Air Quality Index: {aqi} ({status})"
-        
+
         if air_quality.pm25:
             summary += f"\nPM2.5: {air_quality.pm25:.1f} μg/m³"
-        
+
         if air_quality.pm10:
             summary += f"\nPM10: {air_quality.pm10:.1f} μg/m³"
 

@@ -11,3 +11,5 @@ pydantic
 gunicorn
 pytest
 httpx
+weaviate-client
+PyYAML

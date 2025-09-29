@@ -121,7 +121,19 @@ export class ChatComponent implements OnInit, AfterViewChecked {
     this.weatherService.getChatSession(session.session_id, this.userId).subscribe({
       next: (sessionData) => {
         this.currentSession = sessionData;
-        this.messages = sessionData.messages;
+        
+          // Parse image data for each message
+          this.messages = sessionData.messages.map(message => {
+            if (message.role === 'assistant') {
+              const { cleanContent } = this.parseImageFromResponse(message.content);
+              return {
+                ...message,
+                content: cleanContent
+              };
+            }
+            return message;
+          });
+        
         this.displayedMessages = [...this.messages];
         this.focusInput();
       },
@@ -169,17 +181,16 @@ export class ChatComponent implements OnInit, AfterViewChecked {
         };
         this.messages.push(userMessage);
 
-        // Parse image data from AI response
-        const { cleanContent, imageData } = this.parseImageFromResponse(response.response);
-        
-        // Add AI response
-        const aiMessage: ChatMessage = {
-          role: 'assistant',
-          content: cleanContent,
-          timestamp: response.timestamp,
-          message_id: response.message_id,
-          image: imageData
-        };
+          // Parse image data from AI response
+          const { cleanContent } = this.parseImageFromResponse(response.response);
+
+          // Add AI response
+          const aiMessage: ChatMessage = {
+            role: 'assistant',
+            content: cleanContent,
+            timestamp: response.timestamp,
+            message_id: response.message_id
+          };
         this.messages.push(aiMessage);
 
         // Check if this was a new session before updating currentSession
@@ -349,48 +360,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
   }
 
   private parseImageFromResponse(content: string): { cleanContent: string, imageData?: WeatherImage } {
-    // Look for weather image section in the response
-    const imageSectionRegex = /=== WEATHER IMAGE ===\n(.*?)\n=== END IMAGE ===/s;
-    const match = content.match(imageSectionRegex);
-    
-    if (!match) {
-      return { cleanContent: content };
-    }
-    
-    const imageSection = match[1];
-    const lines = imageSection.split('\n');
-    
-    let imageData: WeatherImage | undefined;
-    
-    // Parse image data from the section
-    for (const line of lines) {
-      if (line.startsWith('Image URL: ')) {
-        const url = line.replace('Image URL: ', '');
-        if (!imageData) imageData = {} as WeatherImage;
-        imageData.url = url;
-      } else if (line.startsWith('Description: ')) {
-        const alt = line.replace('Description: ', '');
-        if (!imageData) imageData = {} as WeatherImage;
-        imageData.alt = alt;
-      } else if (line.startsWith('Photographer: ')) {
-        const photographer = line.replace('Photographer: ', '');
-        if (!imageData) imageData = {} as WeatherImage;
-        imageData.photographer = photographer;
-      } else if (line.startsWith('Search Query: ')) {
-        const query = line.replace('Search Query: ', '');
-        if (!imageData) imageData = {} as WeatherImage;
-        imageData.query = query;
-      }
-    }
-    
-    // Add photographer URL (Pexels standard)
-    if (imageData) {
-      imageData.photographer_url = 'https://www.pexels.com';
-    }
-    
-    // Remove the image section from the content
-    const cleanContent = content.replace(imageSectionRegex, '').trim();
-    
-    return { cleanContent, imageData };
+    // No longer parsing image data as Pexels integration has been removed
+    return { cleanContent: content };
   }
 }

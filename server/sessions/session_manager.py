@@ -1,7 +1,7 @@
 from typing import Dict, List, Optional
 from datetime import datetime, timedelta, timezone
 import uuid
-from models import ChatSession, ChatMessage
+from models.chat import ChatSession, ChatMessage
 
 
 class SessionManager:

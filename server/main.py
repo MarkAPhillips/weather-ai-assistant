@@ -4,9 +4,9 @@ import os
 import asyncio
 from datetime import datetime, timezone
 from contextlib import asynccontextmanager
-from weather_agent import WeatherAgent
-from session_manager import SessionManager
-from models import ChatRequest, ChatResponse
+from agents.weather_agent import WeatherAgent
+from sessions.session_manager import SessionManager
+from models.chat import ChatRequest, ChatResponse
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -103,7 +103,8 @@ async def send_chat_message(request: ChatRequest, user_id: str):
         # Get AI response with context
         ai_response = weather_agent.get_weather_advice(
             query=request.message,
-            conversation_history=conversation_history
+            conversation_history=conversation_history,
+            session_id=session.session_id
         )
 
         # Add AI response to session

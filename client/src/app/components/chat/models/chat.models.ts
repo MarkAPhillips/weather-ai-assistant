@@ -3,7 +3,6 @@ export interface ChatMessage {
   content: string;
   timestamp: string;
   message_id: string;
-  image?: WeatherImage;
 }
 
 export interface WeatherImage {
