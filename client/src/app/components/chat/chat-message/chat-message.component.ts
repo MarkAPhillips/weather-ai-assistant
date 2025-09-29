@@ -34,8 +34,78 @@ export class ChatMessageComponent {
   }
 
   formatMessageContent(content: string): string {
+    // Weather emoji mapping
+    const weatherEmojis: { [key: string]: string } = {
+      // Weather conditions
+      'sunny': '☀️',
+      'clear': '☀️',
+      'clear sky': '☀️',
+      'partly cloudy': '⛅',
+      'cloudy': '☁️',
+      'overcast': '☁️',
+      'rain': '🌧️',
+      'rainy': '🌧️',
+      'drizzle': '🌦️',
+      'light rain': '🌦️',
+      'heavy rain': '⛈️',
+      'thunderstorm': '⛈️',
+      'storm': '⛈️',
+      'snow': '❄️',
+      'snowy': '❄️',
+      'sleet': '🌨️',
+      'hail': '🌨️',
+      'fog': '🌫️',
+      'foggy': '🌫️',
+      'mist': '🌫️',
+      'wind': '💨',
+      'windy': '💨',
+      'tornado': '🌪️',
+      'hurricane': '🌀',
+      'hot': '🔥',
+      'cold': '🥶',
+      'warm': '🌡️',
+      'cool': '❄️',
+      
+      // Temperature descriptions
+      'freezing': '🧊',
+      'boiling': '♨️',
+      'mild': '🌤️',
+      'pleasant': '😊',
+      
+      // Air quality
+      'air quality': '🌬️',
+      'pollution': '🏭',
+      'smog': '🌫️',
+      'clean air': '🌱',
+      
+      // Time of day
+      'morning': '🌅',
+      'afternoon': '☀️',
+      'evening': '🌆',
+      'night': '🌙',
+      'dawn': '🌅',
+      'dusk': '🌇',
+      
+      // Seasons
+      'spring': '🌸',
+      'summer': '☀️',
+      'autumn': '🍂',
+      'fall': '🍂',
+      'winter': '❄️'
+    };
+
+    let formattedContent = content;
+    
+    // Add weather emojis
+    Object.keys(weatherEmojis).forEach(keyword => {
+      const regex = new RegExp(`\\b${keyword}\\b`, 'gi');
+      formattedContent = formattedContent.replace(regex, `${weatherEmojis[keyword]} $&`);
+    });
+    
     // Convert **text** to <strong>text</strong>
-    return content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    formattedContent = formattedContent.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    
+    return formattedContent;
   }
 
   formatTimestamp(timestamp: string): string {

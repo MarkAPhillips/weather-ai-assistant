@@ -75,26 +75,16 @@ describe('ChatMessageComponent', () => {
   });
 
   describe('Typewriter Effect', () => {
-    it('should show typewriter cursor when active and is last message', () => {
+    it('should not show typewriter cursor (removed)', () => {
       component.message = mockAssistantMessage;
       component.typewriterActive = true;
       component.isLastMessage = true;
       fixture.detectChanges();
 
-      // Check for typewriter cursor element
+      // Check that typewriter cursor is no longer shown (removed)
       const compiled = fixture.nativeElement;
       const cursorElement = compiled.querySelector('[data-testid="typewriter-cursor"]');
-      expect(cursorElement).toBeTruthy();
-    });
-
-    it('should not show typewriter cursor when not active', () => {
-      component.message = mockAssistantMessage;
-      component.typewriterActive = false;
-      component.isLastMessage = true;
-      fixture.detectChanges();
-
-      const compiled = fixture.nativeElement;
-      expect(compiled.querySelector('[data-testid="typewriter-cursor"]')).toBeFalsy();
+      expect(cursorElement).toBeFalsy();
     });
 
     it('should emit skipTypewriter when clicked during typewriter', () => {
@@ -119,7 +109,41 @@ describe('ChatMessageComponent', () => {
       const compiled = fixture.nativeElement;
       const strongElement = compiled.querySelector('strong');
       expect(strongElement).toBeTruthy();
-      expect(strongElement.textContent).toBe('sunny');
+      expect(strongElement.textContent).toBe('☀️ sunny');
+    });
+
+    it('should add weather emojis to weather-related text', () => {
+      const weatherMessage: ChatMessage = {
+        role: 'assistant',
+        content: 'It is sunny and warm today with light rain expected in the evening.',
+        timestamp: '2024-01-15T10:30:05Z',
+        message_id: 'msg-2'
+      };
+      
+      component.message = weatherMessage;
+      fixture.detectChanges();
+
+      const compiled = fixture.nativeElement;
+      const messageText = compiled.querySelector('[data-testid="message-text"]');
+      expect(messageText.innerHTML).toContain('☀️ sunny');
+      expect(messageText.innerHTML).toContain('🌧️ rain');
+    });
+
+    it('should add temperature emojis', () => {
+      const tempMessage: ChatMessage = {
+        role: 'assistant',
+        content: 'It will be hot during the day and cold at night.',
+        timestamp: '2024-01-15T10:30:05Z',
+        message_id: 'msg-3'
+      };
+      
+      component.message = tempMessage;
+      fixture.detectChanges();
+
+      const compiled = fixture.nativeElement;
+      const messageText = compiled.querySelector('[data-testid="message-text"]');
+      expect(messageText.innerHTML).toContain('🔥 hot');
+      expect(messageText.innerHTML).toContain('🥶 cold');
     });
 
     it('should format timestamp correctly', () => {
