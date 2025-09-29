@@ -13,6 +13,7 @@
           (click)="onCleanupRequested()" 
           matTooltip="Remove old sessions (older than 24 hours)"
           class="action-icon text-white/70 w-10 h-10"
+          data-testid="cleanup-button"
         >
           <mat-icon class="text-xl text-white">clear_all</mat-icon>
         </button>
@@ -21,6 +22,7 @@
           (click)="onClearAllRequested()" 
           matTooltip="Delete all sessions"
           class="action-icon text-white w-10 h-10"
+          data-testid="clear-all-button"
         >
           <mat-icon class="text-xl text-white">delete_forever</mat-icon>
         </button>
@@ -35,6 +37,7 @@
         <div 
           class="cursor-pointer border rounded-lg p-3 bg-white/5"
           (click)="onSessionSelected(session)"
+          data-testid="session-item"
         >
           <div class="flex justify-between items-start">
             <div class="flex-1">
@@ -53,6 +56,7 @@
               (click)="onSessionDeleted(session.session_id); $event.stopPropagation()"
               matTooltip="Delete session"
               class="action-icon text-white"
+              data-testid="delete-session-button"
             >
               <mat-icon class="text-white">delete</mat-icon>
             </button>
@@ -61,7 +65,7 @@
       </div>
       
       <!-- Empty state -->
-      <div *ngIf="getSessionsWithMessages().length === 0" class="text-center py-8 px-4 text-slate-400">
+      <div *ngIf="getSessionsWithMessages().length === 0" class="text-center py-8 px-4 text-slate-400" data-testid="empty-state">
         <mat-icon class="text-5xl w-12 h-12 mb-4 opacity-50 text-white">inbox</mat-icon>
         <p>No chat sessions created</p>
       </div>
@@ -69,7 +73,7 @@
   </div>
   
   <!-- Footer -->
-  <div *ngIf="getSessionsWithMessages().length > 0" class="border-t border-white/10 py-2 px-4">
+  <div *ngIf="getSessionsWithMessages().length > 0" class="border-t border-white/10 py-2 px-4" data-testid="session-stats">
     <div class="text-xs text-slate-400 text-center">
       Total: {{ getSessionsWithMessages().length }} chat sessions
     </div>

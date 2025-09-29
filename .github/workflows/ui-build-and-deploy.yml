@@ -40,7 +40,7 @@ jobs:
     - name: Run tests
       run: |
         cd client
-        npm run test -- --watch=false --browsers=ChromeHeadless || echo "Tests not configured, skipping..."
+        npm run test -- --watch=false --browsers=ChromeHeadless
         
     - name: Build application
       run: |

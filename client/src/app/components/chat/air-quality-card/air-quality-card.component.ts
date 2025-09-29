@@ -9,15 +9,16 @@ import { AirQualityData } from '../models/chat.models';
   imports: [CommonModule, MatIconModule],
   template: `
     <div class="backdrop-blur-xl bg-white/10 border border-white/20 rounded-2xl p-4 mt-3 shadow-2xl transition-all duration-300 ease-in-out hover:bg-white/15 hover:border-white/30 hover:shadow-2xl hover:-translate-y-0.5 max-w-sm" 
-         [ngClass]="getAqiClass()">
+         [ngClass]="getAqiClass()"
+         data-testid="air-quality-card">
       
       <!-- Header -->
       <div class="flex items-center justify-between mb-4">
         <div class="flex items-center gap-3">
           <mat-icon class="text-2xl">{{ getAqiIcon() }}</mat-icon>
           <div class="flex flex-col">
-            <span class="text-lg font-semibold text-white">{{ getAqiStatus() }}</span>
-            <span class="text-sm text-slate-300">AQI: {{ airQuality.aqi }}</span>
+            <span class="text-lg font-semibold text-white" data-testid="aqi-status">{{ getAqiStatus() }}</span>
+            <span class="text-sm text-slate-300" data-testid="aqi-value">AQI: {{ airQuality.aqi }}</span>
           </div>
         </div>
         <div class="flex items-center gap-1 text-xs text-slate-400" *ngIf="airQuality.location">
@@ -32,7 +33,7 @@ import { AirQualityData } from '../models/chat.models';
           <mat-icon class="text-sm text-slate-400">science</mat-icon>
           <span class="text-sm font-medium text-slate-300">Pollutants</span>
         </div>
-        <div class="grid grid-cols-2 gap-2">
+        <div class="grid grid-cols-2 gap-2" data-testid="pollutants-grid">
           <div class="flex justify-between items-center p-2 rounded-lg bg-white/5 border border-white/10" *ngIf="airQuality.pm25">
             <span class="text-xs font-medium text-slate-300">PM2.5</span>
             <span class="text-xs text-slate-400">{{ airQuality.pm25 | number:'1.1-1' }} μg/m³</span>
@@ -58,7 +59,7 @@ import { AirQualityData } from '../models/chat.models';
           <mat-icon class="text-sm text-slate-400">health_and_safety</mat-icon>
           <span class="text-sm font-medium text-slate-300">Health Recommendations</span>
         </div>
-        <div class="space-y-2">
+        <div class="space-y-2" data-testid="recommendations-list">
           <div class="flex items-start gap-2 p-2 rounded-lg bg-white/5 border border-white/10" *ngFor="let rec of airQuality.health_recommendations">
             <mat-icon class="text-sm text-green-400 mt-0.5">{{ getRecommendationIcon() }}</mat-icon>
             <span class="text-sm text-slate-300 leading-relaxed">{{ rec }}</span>
@@ -67,7 +68,7 @@ import { AirQualityData } from '../models/chat.models';
       </div>
 
       <!-- Timestamp -->
-      <div class="flex items-center gap-1 text-xs text-slate-500 pt-2 border-t border-white/10" *ngIf="airQuality.timestamp">
+      <div class="flex items-center gap-1 text-xs text-slate-500 pt-2 border-t border-white/10" *ngIf="airQuality.timestamp" data-testid="air-quality-timestamp">
         <mat-icon class="text-xs">schedule</mat-icon>
         <span>{{ formatTimestamp(airQuality.timestamp) }}</span>
       </div>
@@ -133,6 +134,9 @@ export class AirQualityCardComponent {
   formatTimestamp(timestamp: string): string {
     try {
       const date = new Date(timestamp);
+      if (isNaN(date.getTime())) {
+        return 'Recent';
+      }
       return date.toLocaleString('en-GB', {
         month: 'short',
         day: 'numeric',

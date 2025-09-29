@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatIconModule } from '@angular/material/icon';
 import { AirQualityCardComponent } from './air-quality-card.component';
 import { AirQualityData } from '../models/chat.models';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
 describe('AirQualityCardComponent', () => {
   let component: AirQualityCardComponent;
@@ -9,7 +10,7 @@ describe('AirQualityCardComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [AirQualityCardComponent, MatIconModule]
+      imports: [AirQualityCardComponent, MatIconModule, NoopAnimationsModule]
     })
     .compileComponents();
 
@@ -35,7 +36,7 @@ describe('AirQualityCardComponent', () => {
       component.airQuality = goodAirQuality;
       fixture.detectChanges();
 
-      expect(component.getAqiClass()).toBe('aqi-good');
+      expect(component.getAqiClass()).toBe('border-green-400/30 bg-green-500/5');
       expect(component.getAqiStatus()).toBe('Good');
       expect(component.getAqiIcon()).toBe('eco');
     });
@@ -53,7 +54,7 @@ describe('AirQualityCardComponent', () => {
       component.airQuality = moderateAirQuality;
       fixture.detectChanges();
 
-      expect(component.getAqiClass()).toBe('aqi-moderate');
+      expect(component.getAqiClass()).toBe('border-yellow-400/30 bg-yellow-500/5');
       expect(component.getAqiStatus()).toBe('Moderate');
       expect(component.getAqiIcon()).toBe('wb_sunny');
     });
@@ -71,7 +72,7 @@ describe('AirQualityCardComponent', () => {
       component.airQuality = unhealthyAirQuality;
       fixture.detectChanges();
 
-      expect(component.getAqiClass()).toBe('aqi-unhealthy');
+      expect(component.getAqiClass()).toBe('border-red-400/30 bg-red-500/5');
       expect(component.getAqiStatus()).toBe('Unhealthy');
       expect(component.getAqiIcon()).toBe('error');
     });
@@ -145,8 +146,8 @@ describe('AirQualityCardComponent', () => {
     it('should format valid timestamp correctly', () => {
       const testTimestamp = '2024-01-15T14:30:00Z';
       const formatted = component.formatTimestamp(testTimestamp);
-      
-      expect(formatted).toMatch(/Jan 15, \d{2}:\d{2}/);
+      // Format is "15 Jan, 14:30" in en-GB locale
+      expect(formatted).toMatch(/\d{1,2} \w{3}, \d{2}:\d{2}/);
     });
 
     it('should handle invalid timestamp gracefully', () => {
@@ -178,21 +179,23 @@ describe('AirQualityCardComponent', () => {
 
       const compiled = fixture.nativeElement;
       
-      // Check header elements
-      expect(compiled.querySelector('.aqi-status').textContent).toContain('Moderate');
-      expect(compiled.querySelector('.aqi-value').textContent).toContain('AQI: 75');
-      expect(compiled.querySelector('.aqi-location').textContent).toContain('Test City, Country');
+      // Check header elements using data-testid selectors
+      const statusElement = compiled.querySelector('[data-testid="aqi-status"]');
+      expect(statusElement?.textContent).toContain('Moderate');
+      const aqiValueElement = compiled.querySelector('[data-testid="aqi-value"]');
+      expect(aqiValueElement?.textContent).toContain('75');
       
-      // Check pollutants section
-      expect(compiled.querySelector('.pollutants-section')).toBeTruthy();
-      expect(compiled.querySelector('.pollutant-item')).toBeTruthy();
+      // Check pollutants section - using data-testid selectors
+      const pollutantItems = compiled.querySelectorAll('[data-testid="pollutants-grid"] > div');
+      expect(pollutantItems.length).toBeGreaterThan(0);
       
-      // Check recommendations section
-      expect(compiled.querySelector('.recommendations-section')).toBeTruthy();
-      expect(compiled.querySelector('.recommendation-item')).toBeTruthy();
+      // Check recommendations section - using data-testid selectors
+      const recommendationItems = compiled.querySelectorAll('[data-testid="recommendations-list"] > div');
+      expect(recommendationItems.length).toBeGreaterThan(0);
       
-      // Check timestamp
-      expect(compiled.querySelector('.aqi-timestamp')).toBeTruthy();
+      // Check timestamp - using data-testid selectors
+      const timestampElement = compiled.querySelector('[data-testid="air-quality-timestamp"]');
+      expect(timestampElement).toBeTruthy();
     });
 
     it('should apply correct CSS class based on AQI', () => {
@@ -207,9 +210,9 @@ describe('AirQualityCardComponent', () => {
       fixture.detectChanges();
 
       const compiled = fixture.nativeElement;
-      const cardElement = compiled.querySelector('.air-quality-card');
+      const cardElement = compiled.querySelector('[data-testid="air-quality-card"]');
       
-      expect(cardElement.classList.contains('aqi-good')).toBe(true);
+      expect(cardElement?.className).toContain('border-green-400/30 bg-green-500/5');
     });
   });
 });

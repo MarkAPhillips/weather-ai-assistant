@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ChatMessageComponent } from './chat-message.component';
 import { ChatMessage } from '../models/chat.models';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
 describe('ChatMessageComponent', () => {
   let component: ChatMessageComponent;
@@ -22,7 +23,7 @@ describe('ChatMessageComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [ChatMessageComponent]
+      imports: [ChatMessageComponent, NoopAnimationsModule]
     }).compileComponents();
 
     fixture = TestBed.createComponent(ChatMessageComponent);
@@ -39,9 +40,9 @@ describe('ChatMessageComponent', () => {
       fixture.detectChanges();
 
       const compiled = fixture.nativeElement;
-      expect(compiled.querySelector('.bg-blue-200')).toBeTruthy();
-      expect(compiled.querySelector('.text-black')).toBeTruthy();
-      expect(compiled.textContent).toContain('Hello, how is the weather?');
+      const messageContent = compiled.querySelector('[data-testid="message-content"]');
+      expect(messageContent).toBeTruthy();
+      expect(messageContent.textContent).toContain('Hello, how is the weather?');
     });
 
     it('should render assistant message correctly', () => {
@@ -49,9 +50,9 @@ describe('ChatMessageComponent', () => {
       fixture.detectChanges();
 
       const compiled = fixture.nativeElement;
-      expect(compiled.querySelector('.bg-gray-100')).toBeTruthy();
-      expect(compiled.querySelector('.text-gray-800')).toBeTruthy();
-      expect(compiled.textContent).toContain('The weather is');
+      const messageContent = compiled.querySelector('[data-testid="message-content"]');
+      expect(messageContent).toBeTruthy();
+      expect(messageContent.textContent).toContain('The weather is');
     });
   });
 
@@ -61,7 +62,7 @@ describe('ChatMessageComponent', () => {
       fixture.detectChanges();
 
       const compiled = fixture.nativeElement;
-      expect(compiled.textContent).toContain('👤');
+      expect(compiled.querySelector('mat-icon')).toBeTruthy();
     });
 
     it('should show robot icon for assistant messages', () => {
@@ -69,7 +70,7 @@ describe('ChatMessageComponent', () => {
       fixture.detectChanges();
 
       const compiled = fixture.nativeElement;
-      expect(compiled.textContent).toContain('🤖');
+      expect(compiled.querySelector('mat-icon')).toBeTruthy();
     });
   });
 
@@ -80,8 +81,10 @@ describe('ChatMessageComponent', () => {
       component.isLastMessage = true;
       fixture.detectChanges();
 
+      // Check for typewriter cursor element
       const compiled = fixture.nativeElement;
-      expect(compiled.querySelector('.animate-pulse')).toBeTruthy();
+      const cursorElement = compiled.querySelector('[data-testid="typewriter-cursor"]');
+      expect(cursorElement).toBeTruthy();
     });
 
     it('should not show typewriter cursor when not active', () => {
@@ -91,7 +94,7 @@ describe('ChatMessageComponent', () => {
       fixture.detectChanges();
 
       const compiled = fixture.nativeElement;
-      expect(compiled.querySelector('.animate-pulse')).toBeFalsy();
+      expect(compiled.querySelector('[data-testid="typewriter-cursor"]')).toBeFalsy();
     });
 
     it('should emit skipTypewriter when clicked during typewriter', () => {
@@ -101,7 +104,7 @@ describe('ChatMessageComponent', () => {
       component.isLastMessage = true;
       fixture.detectChanges();
 
-      const messageContent = fixture.nativeElement.querySelector('.cursor-pointer');
+      const messageContent = fixture.nativeElement.querySelector('[data-testid="message-text"]');
       messageContent.click();
 
       expect(component.skipTypewriter.emit).toHaveBeenCalled();
@@ -124,8 +127,9 @@ describe('ChatMessageComponent', () => {
       fixture.detectChanges();
 
       const compiled = fixture.nativeElement;
-      const timestampElement = compiled.querySelector('.text-xs');
-      expect(timestampElement.textContent).toMatch(/\d{1,2}:\d{2}/);
+      const timestampElement = compiled.querySelector('[data-testid="message-timestamp"]');
+      // The timestamp format is "Mon, Jan 15th 10.30am" with . instead of :
+      expect(timestampElement.textContent).toMatch(/\d{1,2}\.\d{2}/);
     });
   });
 

@@ -21,6 +21,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
             (keydown.enter)="onSendMessage()"
             [disabled]="loading"
             class="text-white placeholder-slate-400"
+            data-testid="message-input"
           />
         </mat-form-field>
         <button
@@ -29,15 +30,12 @@ import { MatFormFieldModule } from '@angular/material/form-field';
           (click)="onSendMessage()"
           [disabled]="loading || !message.trim()"
           class="text-sm px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          data-testid="send-button"
         >
           Ask
         </button>
       </div>
       
-      <!-- Error Display -->
-      <div *ngIf="error" class="mt-2 text-red-300 text-sm">
-        {{ error }}
-      </div>
     </div>
   `,
   styles: [`
@@ -100,7 +98,6 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 })
 export class ChatInputComponent {
   @Input() loading: boolean = false;
-  @Input() error: string = '';
   @Output() sendMessage = new EventEmitter<string>();
   @ViewChild('messageInput') messageInput!: ElementRef<HTMLInputElement>;
 

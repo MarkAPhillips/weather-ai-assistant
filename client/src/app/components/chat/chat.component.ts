@@ -33,7 +33,6 @@ export class ChatComponent implements OnInit, AfterViewChecked {
   displayedMessages: ChatMessage[] = [];
   currentSession: ChatSession | null = null;
   loading: boolean = false;
-  error: string = '';
   typewriterActive: boolean = false;
   userId: string = '';
 
@@ -85,11 +84,13 @@ export class ChatComponent implements OnInit, AfterViewChecked {
     this.weatherService.getChatSessions(this.userId).subscribe({
       next: (data) => {
         this.sessions = data.sessions;
-        this.error = ''; // Clear any previous errors
       },
       error: (err) => {
         console.error('Failed to load sessions:', err);
-        this.error = 'Failed to load sessions: ' + err.message;
+        this.snackBar.open('Failed to load sessions. Please refresh the page.', 'Close', {
+          duration: 5000,
+          panelClass: ['error-snackbar']
+        });
       }
     });
   }
@@ -106,7 +107,10 @@ export class ChatComponent implements OnInit, AfterViewChecked {
           this.focusInput();
         },
         error: (err) => {
-          this.error = 'Failed to create session: ' + err.message;
+          this.snackBar.open('Failed to create session. Please try again.', 'Close', {
+            duration: 5000,
+            panelClass: ['error-snackbar']
+          });
         }
       });
     } else {
@@ -135,10 +139,14 @@ export class ChatComponent implements OnInit, AfterViewChecked {
           });
         
         this.displayedMessages = [...this.messages];
+        this.showSessionList = false;
         this.focusInput();
       },
       error: (err) => {
-        this.error = 'Failed to load session: ' + err.message;
+        this.snackBar.open('Failed to load session. Please try again.', 'Close', {
+          duration: 5000,
+          panelClass: ['error-snackbar']
+        });
       }
     });
   }
@@ -154,7 +162,10 @@ export class ChatComponent implements OnInit, AfterViewChecked {
         this.loadSessions();
       },
       error: (err) => {
-        this.error = 'Failed to delete session: ' + err.message;
+        this.snackBar.open('Failed to delete session. Please try again.', 'Close', {
+          duration: 5000,
+          panelClass: ['error-snackbar']
+        });
       }
     });
   }
@@ -163,7 +174,6 @@ export class ChatComponent implements OnInit, AfterViewChecked {
     if (!message.trim() || this.loading) return;
 
     this.loading = true;
-    this.error = '';
 
     const request = {
       message: message.trim(),
@@ -216,7 +226,10 @@ export class ChatComponent implements OnInit, AfterViewChecked {
         this.focusInput();
       },
       error: (err) => {
-        this.error = 'Failed to send message: ' + err.message;
+        this.snackBar.open('Failed to send message. Please try again.', 'Close', {
+          duration: 5000,
+          panelClass: ['error-snackbar']
+        });
         this.loading = false;
         this.cdr.detectChanges(); // Force change detection
       }
@@ -284,7 +297,10 @@ export class ChatComponent implements OnInit, AfterViewChecked {
         });
       },
       error: (err) => {
-        this.error = 'Failed to cleanup sessions: ' + err.message;
+        this.snackBar.open('Failed to cleanup sessions. Please try again.', 'Close', {
+          duration: 5000,
+          panelClass: ['error-snackbar']
+        });
         this.snackBar.open('Failed to cleanup chat sessions', 'Close', {
           duration: 3000,
           horizontalPosition: 'center',
@@ -310,7 +326,10 @@ export class ChatComponent implements OnInit, AfterViewChecked {
         });
       },
       error: (err) => {
-        this.error = 'Failed to delete all sessions: ' + err.message;
+        this.snackBar.open('Failed to delete all sessions. Please try again.', 'Close', {
+          duration: 5000,
+          panelClass: ['error-snackbar']
+        });
         this.snackBar.open('Failed to delete all chat sessions', 'Close', {
           duration: 3000,
           horizontalPosition: 'center',
@@ -350,7 +369,9 @@ export class ChatComponent implements OnInit, AfterViewChecked {
 
   focusInput(): void {
     setTimeout(() => {
-      this.chatInput.focus();
+      if (this.chatInput && this.chatInput.focus) {
+        this.chatInput.focus();
+      }
     }, 100);
   }
 

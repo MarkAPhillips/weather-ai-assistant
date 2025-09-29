@@ -16,14 +16,16 @@
        [ngClass]="{
          'bg-blue-500/20 text-white': message.role === 'user',
          'bg-white/10 text-white': message.role === 'assistant'
-       }">
+       }"
+       data-testid="message-content">
     
     <div class="whitespace-pre-wrap text-white [&_*]:text-white [&_strong]:text-white [&_strong]:font-semibold" 
          [innerHTML]="formatMessageContent(message.content)" 
          (click)="onMessageClick()" 
-         [class.cursor-pointer]="canSkipTypewriter">
-      <span *ngIf="showTypewriterCursor" class="animate-pulse">|</span>
+         [class.cursor-pointer]="canSkipTypewriter"
+         data-testid="message-text">
     </div>
+    <span *ngIf="showTypewriterCursor" class="animate-pulse" data-testid="typewriter-cursor">|</span>
     
     <!-- Air Quality Card -->
     <app-air-quality-card 
@@ -36,7 +38,8 @@
          [ngClass]="{
            'text-blue-100': message.role === 'user',
            'text-slate-300': message.role === 'assistant'
-         }">
+         }"
+         data-testid="message-timestamp">
       {{formatTimestamp(message.timestamp)}}
     </div>
   </div>
