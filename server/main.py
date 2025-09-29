@@ -29,6 +29,10 @@ async def lifespan(app: FastAPI):
     # Shutdown
     cleanup_task.cancel()
     print("Shutting down Weather AI Assistant...")
+    
+    # Close Weaviate connection
+    if 'weather_agent' in globals():
+        weather_agent.close()
 
 
 async def periodic_cleanup():

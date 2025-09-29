@@ -13,13 +13,13 @@ class WeaviateService:
         # Get Weaviate credentials from environment variables
         self.cluster_url = os.getenv('WEAVIATE_CLUSTER_URL')
         self.api_key = os.getenv('WEAVIATE_API_KEY')
+        self.client = None
 
         if not self.cluster_url or not self.api_key:
             logger.warning(
                 "Weaviate credentials not found. "
                 "Skipping Weaviate initialisation."
             )
-            self.client = None
             return
 
         try:
@@ -41,6 +41,21 @@ class WeaviateService:
         except Exception as e:
             logger.error(f"Failed to initialize Weaviate client: {e}")
             self.client = None
+
+    def __del__(self):
+        """Cleanup method to close Weaviate connection."""
+        self.close()
+
+    def close(self):
+        """Close the Weaviate connection."""
+        if self.client:
+            try:
+                self.client.close()
+                logger.info("Weaviate connection closed")
+            except Exception as e:
+                logger.warning(f"Error closing Weaviate connection: {e}")
+            finally:
+                self.client = None
 
     def _create_schema(self):
         """Create the weather knowledge schema in Weaviate."""

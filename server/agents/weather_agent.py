@@ -38,6 +38,16 @@ class WeatherAgent:
         # Initialize agent (will be created lazily when first used)
         self.agent = None
 
+    def __del__(self):
+        """Cleanup method to close Weaviate connection."""
+        if hasattr(self, 'weaviate_service'):
+            self.weaviate_service.close()
+
+    def close(self):
+        """Close all service connections."""
+        if hasattr(self, 'weaviate_service'):
+            self.weaviate_service.close()
+
     def get_weather_tool(self, city: str, query: str = "") -> str:
         """Weather tool for current weather, forecasts, and historical data.
 
