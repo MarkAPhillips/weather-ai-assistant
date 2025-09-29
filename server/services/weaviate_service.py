@@ -1,4 +1,5 @@
 import weaviate
+from weaviate.auth import AuthApiKey
 import os
 from typing import List, Dict, Any
 import logging
@@ -31,7 +32,7 @@ class WeaviateService:
 
             self.client = weaviate.connect_to_weaviate_cloud(
                 cluster_url=cluster_url,
-                auth_credentials=weaviate.AuthApiKey(api_key=self.api_key),
+                auth_credentials=AuthApiKey(api_key=self.api_key),
                 skip_init_checks=True
             )
 
