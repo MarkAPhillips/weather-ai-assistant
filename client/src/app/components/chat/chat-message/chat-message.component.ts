@@ -34,7 +34,7 @@ export class ChatMessageComponent {
   }
 
   formatMessageContent(content: string): string {
-    // Weather emoji mapping
+    // Weather emoji mapping - only core weather conditions
     const weatherEmojis: { [key: string]: string } = {
       // Weather conditions
       'sunny': '☀️',
@@ -61,37 +61,12 @@ export class ChatMessageComponent {
       'windy': '💨',
       'tornado': '🌪️',
       'hurricane': '🌀',
+      
+      // Temperature extremes only
       'hot': '🔥',
       'cold': '🥶',
-      'warm': '🌡️',
-      'cool': '❄️',
-      
-      // Temperature descriptions
       'freezing': '🧊',
-      'boiling': '♨️',
-      'mild': '🌤️',
-      'pleasant': '😊',
-      
-      // Air quality
-      'air quality': '🌬️',
-      'pollution': '🏭',
-      'smog': '🌫️',
-      'clean air': '🌱',
-      
-      // Time of day
-      'morning': '🌅',
-      'afternoon': '☀️',
-      'evening': '🌆',
-      'night': '🌙',
-      'dawn': '🌅',
-      'dusk': '🌇',
-      
-      // Seasons
-      'spring': '🌸',
-      'summer': '☀️',
-      'autumn': '🍂',
-      'fall': '🍂',
-      'winter': '❄️'
+      'boiling': '♨️'
     };
 
     let formattedContent = content;
