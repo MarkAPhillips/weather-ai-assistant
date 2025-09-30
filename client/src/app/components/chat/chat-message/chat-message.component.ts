@@ -38,8 +38,8 @@ export class ChatMessageComponent {
     const weatherEmojis: { [key: string]: string } = {
       // Weather conditions
       'sunny': '☀️',
-      'clear': '☀️',
       'clear sky': '☀️',
+      'clear': '☀️',
       'partly cloudy': '⛅',
       'cloudy': '☁️',
       'overcast': '☁️',
