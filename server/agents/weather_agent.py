@@ -199,7 +199,7 @@ class WeatherAgent:
                               else "Moderate" if air_quality_data.aqi <= 100
                               else "Poor")
                 air_quality_text = "\n=== AIR QUALITY DETAILS ===\n"
-                air_quality_text += f"Overall AQI: {air_quality_data.aqi} ({aqi_status})\n"
+                air_quality_text += f"Air Quality Index: {air_quality_data.aqi} ({aqi_status})\n"
 
                 if air_quality_data.pm25 is not None:
                     air_quality_text += f"PM2.5: {air_quality_data.pm25:.1f} μg/m³\n"
@@ -217,7 +217,7 @@ class WeatherAgent:
                 if air_quality_data.health_recommendations:
                     air_quality_text += "\nHealth Recommendations:\n"
                     for rec in air_quality_data.health_recommendations:
-                        air_quality_text += f"• {rec}\n"
+                        air_quality_text += f"- {rec}\n"
 
                 air_quality_text += "=== END AIR QUALITY ===\n"
 
