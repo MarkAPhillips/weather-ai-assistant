@@ -7,6 +7,7 @@ from langgraph.checkpoint.memory import MemorySaver
 from services.weather_service import WeatherService
 from services.air_quality_service import AirQualityService
 from services.weaviate_service import WeaviateService
+from services.historical_weather_service import HistoricalWeatherService
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -20,6 +21,7 @@ class WeatherAgent:
         self.weather_service = WeatherService(weather_api_key)
         self.air_quality_service = AirQualityService(weather_api_key)
         self.weaviate_service = WeaviateService()
+        self.historical_weather_service = HistoricalWeatherService()
 
         # Initialise Gemini model
         self.model = ChatGoogleGenerativeAI(
@@ -39,14 +41,18 @@ class WeatherAgent:
         self.agent = None
 
     def __del__(self):
-        """Cleanup method to close Weaviate connection."""
+        """Cleanup method to close service connections."""
         if hasattr(self, 'weaviate_service'):
             self.weaviate_service.close()
+        if hasattr(self, 'historical_weather_service'):
+            self.historical_weather_service.close()
 
     def close(self):
         """Close all service connections."""
         if hasattr(self, 'weaviate_service'):
             self.weaviate_service.close()
+        if hasattr(self, 'historical_weather_service'):
+            self.historical_weather_service.close()
 
     def get_weather_tool(self, city: str, query: str = "") -> str:
         """Weather tool for current weather, forecasts, and historical data.
@@ -224,6 +230,74 @@ class WeatherAgent:
         return (current_weather + historical_text +
                 forecast_text + air_quality_text)
 
+    def search_historical_events_tool(self, query: str) -> str:
+        """Search historical weather events database for major weather events.
+
+        This tool can answer questions about:
+        - Major hurricanes, typhoons, and tropical cyclones
+        - Historical heat waves and cold spells
+        - Significant storms and extreme weather events
+        - Weather disasters and their impacts
+        - Historical weather patterns by region or time period
+        """
+        logger.info(f"Historical events tool called for query: {query}")
+
+        if not self.historical_weather_service.client:
+            logger.info("Historical weather service not available, skipping search")
+            return ""
+
+        try:
+            # Search historical weather events
+            events = self.historical_weather_service.search_historical_events(
+                query, limit=5)
+
+            if not events:
+                logger.info("No historical weather events found for query")
+                return ""
+
+            # Format the historical events
+            events_text = "\n=== HISTORICAL WEATHER EVENTS ===\n"
+            for i, event in enumerate(events, 1):
+                event_subtype = event.get('event_subtype', 'Weather Event')
+                country = event.get('country', 'Unknown Location')
+                
+                # Better formatting for hurricanes/tropical cyclones
+                if 'tropical cyclone' in event_subtype.lower():
+                    event_display = f"Hurricane/Tropical Cyclone in {country}"
+                else:
+                    event_display = f"{event_subtype} in {country}"
+                
+                events_text += f"{i}. {event_display}\n"
+                
+                if event.get('location'):
+                    events_text += f"   Location: {event['location']}\n"
+                
+                if event.get('start_date'):
+                    events_text += f"   Date: {event['start_date']}\n"
+                
+                if event.get('fatalities', 0) > 0:
+                    events_text += f"   Fatalities: {event['fatalities']}\n"
+                
+                if event.get('affected', 0) > 0:
+                    events_text += f"   People Affected: {event['affected']}\n"
+                
+                if event.get('damage_usd', 0) > 0:
+                    damage_millions = event['damage_usd'] / 1_000_000
+                    events_text += f"   Economic Damage: ${damage_millions:.1f}M USD\n"
+                
+                if event.get('description'):
+                    events_text += f"   Details: {event['description']}\n"
+                
+                events_text += "\n"
+
+            events_text += "=== END HISTORICAL EVENTS ===\n"
+            logger.info(f"Retrieved {len(events)} historical events")
+            return events_text
+
+        except Exception as e:
+            logger.error(f"Error searching historical events: {e}")
+            return ""
+
     def search_weather_knowledge_tool(self, query: str) -> str:
         """Search weather knowledge base for explanations, phenomena, and educational content.
 
@@ -270,22 +344,24 @@ class WeatherAgent:
         """Create the LangGraph agent with tools and memory."""
         self.agent = create_react_agent(
             model=self.model,
-            tools=[self.get_weather_tool, self.search_weather_knowledge_tool],
+            tools=[self.get_weather_tool, self.search_weather_knowledge_tool, self.search_historical_events_tool],
             checkpointer=self.memory,
             prompt=(
                 "You are a knowledgeable, friendly weather assistant. You have access to "
-                "weather tools for current conditions and a knowledge base for explanations.\n\n"
+                "weather tools for current conditions, historical weather events, and a knowledge base for explanations.\n\n"
                 "Instructions:\n"
                 "1. For current weather/forecasts: ALWAYS call the weather tool with the city name\n"
                 "2. For weather explanations/phenomena: USE the knowledge search tool\n"
-                "3. Use conversational dates (Today, Tomorrow, Monday) not YYYY-MM-DD\n"
-                "4. Round temperatures to whole numbers\n"
-                "5. Reference previous conversation when relevant\n"
-                "6. If the user asks about air quality, pollution, or AQI, include air quality data\n"
-                "7. Use conversation context to understand what city the user is referring to\n"
-                "8. Combine factual data with educational knowledge when appropriate\n\n"
+                "3. For historical weather events/disasters: USE the historical events search tool\n"
+                "4. Use conversational dates (Today, Tomorrow, Monday) not YYYY-MM-DD\n"
+                "5. Round temperatures to whole numbers\n"
+                "6. Reference previous conversation when relevant\n"
+                "7. If the user asks about air quality, pollution, or AQI, include air quality data\n"
+                "8. Use conversation context to understand what city the user is referring to\n"
+                "9. Combine factual data with educational knowledge when appropriate\n"
+                "10. For historical questions, search the events database for relevant disasters, storms, heat waves, etc.\n\n"
                 "Be conversational, helpful, and provide both current information and "
-                "educational context about weather phenomena and patterns."
+                "educational context about weather phenomena, patterns, and historical events."
             ),
         )
 

@@ -39,7 +39,6 @@ export class ChatMessageComponent {
       // Weather conditions
       'sunny': '☀️',
       'clear sky': '☀️',
-      'clear': '☀️',
       'partly cloudy': '⛅',
       'cloudy': '☁️',
       'overcast': '☁️',
